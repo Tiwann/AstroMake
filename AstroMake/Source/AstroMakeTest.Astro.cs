@@ -16,8 +16,10 @@ public sealed class TestApplication : ConsoleApplication
 {
     public TestApplication()
     {
+        Workspace = "TestWorkspace";
         Name = "TestApplication";
         Language = Language.CPlusPlus;
+        Flags = ApplicationFlags.MultiProcessorCompile;
         
         Files.AddRange(new []
         {
@@ -27,5 +29,6 @@ public sealed class TestApplication : ConsoleApplication
         
         IncludeDirectories.Add("opengl/include");
         Defines.Add("_CRT_SECURE_NO_WARNINGS");
+        
     }
 }
