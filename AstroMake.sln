@@ -1,16 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstroMake", "AstroMake\AstroMake.csproj", "{E0135479-115F-4BE6-8551-7653219E7713}"
+# Visual Studio Version 17
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstroMake", "AstroMake\AstroMake.csproj", "{0C009C9A-786A-5011-C1A8-01B72D522E66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E0135479-115F-4BE6-8551-7653219E7713}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E0135479-115F-4BE6-8551-7653219E7713}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E0135479-115F-4BE6-8551-7653219E7713}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E0135479-115F-4BE6-8551-7653219E7713}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C009C9A-786A-5011-C1A8-01B72D522E66}.Debug|x64.ActiveCfg = Debug|x64
+		{0C009C9A-786A-5011-C1A8-01B72D522E66}.Debug|x64.Build.0 = Debug|x64
+		{0C009C9A-786A-5011-C1A8-01B72D522E66}.Release|x64.ActiveCfg = Release|x64
+		{0C009C9A-786A-5011-C1A8-01B72D522E66}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

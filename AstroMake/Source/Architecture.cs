@@ -3,7 +3,7 @@
 namespace AstroMake 
 {
     [Flags]
-    public enum Architecture : byte
+    public enum Architectures : byte
     {
         x86 = 0,
         x64 = 1,

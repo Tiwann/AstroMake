@@ -8,11 +8,14 @@ namespace AstroMake
         public String Name;
         public String Directory;
         public List<Configuration> Configurations;
-        public System Systems;
-        public Architecture Architectures;
-        public List<Application> Applications;
+        public Systems Systems;
+        public Architectures Architectures;
+        public List<String> Applications;
 
-        public Workspace(String Name) => this.Name = Name;
+        public Workspace()
+        {
+            Directory = System.IO.Directory.GetCurrentDirectory();
+        }
 
         public bool IsValid() 
         {

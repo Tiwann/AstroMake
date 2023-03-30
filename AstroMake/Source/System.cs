@@ -3,8 +3,9 @@
 namespace AstroMake 
 {
     [Flags]
-    public enum System : byte
+    public enum Systems : byte
     {
+        None,
         Windows,
         Unix,
         MacOS,
