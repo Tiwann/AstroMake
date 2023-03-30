@@ -1,0 +1,6 @@
+D:\Dev\AstroMake\AstroMake\bin\Debug\AstroMake.dll
+D:\Dev\AstroMake\AstroMake\bin\Debug\AstroMake.pdb
+D:\Dev\AstroMake\AstroMake\obj\Debug\AstroMake.csproj.AssemblyReference.cache
+D:\Dev\AstroMake\AstroMake\obj\Debug\AstroMake.csproj.CoreCompileInputs.cache
+D:\Dev\AstroMake\AstroMake\obj\Debug\AstroMake.dll
+D:\Dev\AstroMake\AstroMake\obj\Debug\AstroMake.pdb
