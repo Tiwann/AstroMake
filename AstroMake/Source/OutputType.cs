@@ -1,6 +1,6 @@
 ﻿namespace AstroMake 
 {
-    public enum ApplicationType : byte
+    public enum OutputType : byte
     {
         Console,
         Windowed,

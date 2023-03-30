@@ -12,15 +12,13 @@ public sealed class TestWorkspace : Workspace
     }
 }
 
-public sealed class TestApplication : Application
+public sealed class TestApplication : ConsoleApplication
 {
     public TestApplication()
     {
         Name = "TestApplication";
-        Type = ApplicationType.Console;
-        Language = Language.CPP;
-
-
+        Language = Language.CPlusPlus;
+        
         Files.AddRange(new []
         {
             "Source/**.cpp",
@@ -31,4 +29,3 @@ public sealed class TestApplication : Application
         Defines.Add("_CRT_SECURE_NO_WARNINGS");
     }
 }
-

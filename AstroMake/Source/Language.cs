@@ -3,7 +3,7 @@
     public enum Language
     {
         C,
-        CPP,
+        CPlusPlus,
         CSharp
     }
 }

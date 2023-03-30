@@ -1,6 +1,8 @@
-/.idea/
-/Binaries/
-/Binaries-Intermediate/
+.idea
+.vs
+.vscode
+Binaries
+Binaries-Intermediate
 *.sln
 *.csproj
 *.vcxproj
