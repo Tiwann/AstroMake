@@ -1,17 +1,42 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
-namespace AstroMake 
+namespace AstroMake;
+
+public static class Helpers 
 {
-    public static class Helpers 
+    public static List<String> GetAllFilesWithExtension(String Directory, String Extension, bool Recursive)
     {
-        public static bool AllStringsEmpty(params String[] strings) 
+        List<String> Result = new();
+
+        void CollectFileNames(String Dir)
         {
-            foreach(String str in strings) 
+            foreach (String File in global::System.IO.Directory.GetFiles(Dir))
             {
-                if (!String.IsNullOrEmpty(str))
-                    return false;
+                if(File.EndsWith(Extension))
+                    Result.Add(File);
             }
-            return true;
+
+            String[] SubDirectories = global::System.IO.Directory.GetDirectories(Dir);
+
+            if (Recursive)
+            {
+                foreach (String SubDir in SubDirectories)
+                    CollectFileNames(SubDir);
+            }
         }
+        
+        CollectFileNames(Directory);
+        return Result;
     }
+
+
+    public static bool HasAttribute(this Type Type, Type AttributeType)
+    {
+        return Type.GetCustomAttribute(AttributeType) != null;
+    }
+    
 }
