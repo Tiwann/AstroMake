@@ -15,7 +15,7 @@ project "AstroMake"
 	links {
 	    "Microsoft.CSharp",
 	    "System",
-	    "System.Xml"
+	    "System.Xml",
 	}
 	
 	filter "Configurations:Debug"
@@ -27,6 +27,7 @@ project "AstroMake"
     	    runtime "Release"
     	    optimize "On"
     	    symbols "Off"
+    	    
     	    
     	    
     	    
