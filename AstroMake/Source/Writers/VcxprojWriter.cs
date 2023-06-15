@@ -7,54 +7,38 @@ namespace AstroMake;
 
 public class VcxprojWriter : IDisposable
 {
-    private XmlTextWriter m_Writer;
-    private Stream m_Output;
-    
+    private readonly XmlTextWriter writer;
+
     public VcxprojWriter(Stream Output)
     {
-        m_Output = Output;
-        XmlWriterSettings Settings = new XmlWriterSettings
-        {
-            Async = false,
-            CheckCharacters = true,
-            CloseOutput = true,
-            Encoding = Encoding.UTF8,
-            IndentChars = "    ",
-            NewLineHandling = NewLineHandling.Entitize,
-            ConformanceLevel = ConformanceLevel.Document,
-        };
-        m_Writer = new XmlTextWriter(m_Output, Encoding.UTF8);
-        m_Writer.Formatting = Formatting.Indented;
-        m_Writer.Indentation = 4;
-        m_Writer.Namespaces = true;
+        writer = XmlStatics.CreateWriter(Output);
     }
 
     public void Dispose()
     {
-        m_Writer?.Dispose();
-        m_Output?.Dispose();
+        writer?.Dispose();
     }
 
-    internal void WriteAttribute(String Name, String Value)
+    private void WriteAttribute(String Name, String Value)
     {
-        m_Writer.WriteStartAttribute(Name);
-        m_Writer.WriteValue(Value);
-        m_Writer.WriteEndAttribute();
+        writer.WriteStartAttribute(Name);
+        writer.WriteValue(Value);
+        writer.WriteEndAttribute();
     }
 
     public void WriteApplication(Workspace Workspace, Application Application)
     {
         try
         {
-            m_Writer.WriteStartDocument();
-            m_Writer.WriteComment($"Astro Make {Version.AstroVersion} generated vcxproj");
-            m_Writer.WriteComment("Astro Make (c) Erwann Messoah 2023");
-            m_Writer.WriteComment("https://github.com/Tiwann/AstroMake");
+            writer.WriteStartDocument();
+            writer.WriteComment($"Astro Make {Version.AstroVersion} generated vcxproj");
+            writer.WriteComment("Astro Make (c) Erwann Messoah 2023");
+            writer.WriteComment("https://github.com/Tiwann/AstroMake");
 
-            m_Writer.WriteStartElement("Project");
+            writer.WriteStartElement("Project");
             WriteAttribute("DefaultTargets", "Build");
             WriteAttribute("xmlns", XmlStatics.XmlNamespace);
-                m_Writer.WriteStartElement("ItemGroup");
+                writer.WriteStartElement("ItemGroup");
                 WriteAttribute("Label", "ProjectConfigurations");
                     foreach (Configuration Configuration in Workspace.Configurations)
                     {
@@ -63,25 +47,25 @@ public class VcxprojWriter : IDisposable
                             foreach (String Platform in Workspace.Platforms)
                             {
                                 String ConfigName = Workspace.Platforms.Count == 0 ? $"{Configuration.Name}|{Architecture}" : $"{Platform} {Configuration.Name}|{Architecture}";
-                                m_Writer.WriteStartElement("ProjectConfiguration");
+                                writer.WriteStartElement("ProjectConfiguration");
                                 WriteAttribute("Include", ConfigName);
                             
-                                m_Writer.WriteStartElement("Configuration");
-                                m_Writer.WriteString(ConfigName);
-                                m_Writer.WriteEndElement();
+                                writer.WriteStartElement("Configuration");
+                                writer.WriteString(ConfigName);
+                                writer.WriteEndElement();
                             
-                                m_Writer.WriteStartElement("Platform");
-                                m_Writer.WriteString($"{Architecture}");
-                                m_Writer.WriteEndElement();
+                                writer.WriteStartElement("Platform");
+                                writer.WriteString($"{Architecture}");
+                                writer.WriteEndElement();
                             
-                                m_Writer.WriteEndElement();
+                                writer.WriteEndElement();
                             }
                             
                         }
                         
                     }
-                m_Writer.WriteEndElement();
-            m_Writer.WriteEndElement();
+                writer.WriteEndElement();
+            writer.WriteEndElement();
         }
         catch (Exception e)
         {

@@ -7,14 +7,15 @@ namespace AstroMake;
 public class CsprojWriter : IDisposable
 {
     private XmlTextWriter writer;
-    private Stream stream;
-    
-    
-    
 
+    public CsprojWriter(Stream Output)
+    {
+        writer = XmlStatics.CreateWriter(Output);
+    }
+
+    
     public void Dispose()
     {
-        writer.Dispose();
-        stream.Dispose();
+        writer?.Dispose();
     }
 }
