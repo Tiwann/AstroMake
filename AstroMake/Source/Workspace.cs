@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace AstroMake;
 
@@ -21,7 +22,7 @@ public abstract class Workspace
         Architectures = new();
         Applications = new();
         Platforms = new();
-        TargetDirectory = global::System.IO.Directory.GetCurrentDirectory();
+        TargetDirectory = Directory.GetCurrentDirectory();
     }
     
     public IEnumerable<String> GetConfigurationsNames()
