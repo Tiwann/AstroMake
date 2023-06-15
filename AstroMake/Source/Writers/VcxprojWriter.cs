@@ -5,20 +5,13 @@ using System.Xml;
 
 namespace AstroMake;
 
-public class VcxprojWriter : IDisposable
+public class VcxprojWriter : ApplicationWriter
 {
-    private readonly XmlTextWriter writer;
 
-    public VcxprojWriter(Stream Output)
+    public VcxprojWriter(Stream Output) : base(Output)
     {
-        writer = XmlStatics.CreateWriter(Output);
     }
-
-    public void Dispose()
-    {
-        writer?.Dispose();
-    }
-
+    
     private void WriteAttribute(String Name, String Value)
     {
         writer.WriteStartAttribute(Name);
@@ -26,7 +19,7 @@ public class VcxprojWriter : IDisposable
         writer.WriteEndAttribute();
     }
 
-    public void WriteApplication(Workspace Workspace, Application Application)
+    public override void Write(Workspace Workspace, Application Application)
     {
         try
         {

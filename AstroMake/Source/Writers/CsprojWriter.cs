@@ -4,18 +4,17 @@ using System.Xml;
 
 namespace AstroMake;
 
-public class CsprojWriter : IDisposable
+public class CsprojWriter : ApplicationWriter
 {
-    private XmlTextWriter writer;
-
-    public CsprojWriter(Stream Output)
+    public CsprojWriter(Stream Output) : base(Output)
     {
-        writer = XmlStatics.CreateWriter(Output);
+        
     }
 
+
+    public override void Write(Workspace Workspace, Application Application)
+    {
+        
+    }
     
-    public void Dispose()
-    {
-        writer?.Dispose();
-    }
 }
