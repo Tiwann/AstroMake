@@ -2,65 +2,53 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
-
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 using System.Linq;
 
+
 namespace AstroMake;
 
 internal static class Program
 {
-    private static int Main(String[] Arguments)
+    private static void Main(String[] Arguments)
     {
         // Hello Astro Make
         Log.Trace($"Astro Make {Version.AstroVersion}");
         Log.Trace("Copyright (C) 2023 Erwann Messoah");
         Log.Trace("Using dotnet framework 4.8.1\n");
+
+        // Parse the arguments
+        try
+        {
+            ArgumentParser<Options> Parser = new ArgumentParser<Options>(Arguments, ArgumentParserSettings.Default);
+            Parser.Parse(options =>
+            {
+                if (options.Help)
+                {
+                    ShowHelp();
+                }
+
+                if (options.Type is Options.BuildType.None)
+                {
+                    Generate();
+                }
+            });
+        }
+        catch (BadArgumentUsageException Exception)
+        {
+            Log.Error(Exception.Error.ToStr());
+            ShowHelp();
+            Environment.Exit((int)Error.BadArgumentsUsage);
+        }
+        catch (NoArgumentProvidedException Exception)
+        {
+            Log.Error(Exception.Error.ToStr());
+            ShowHelp();
+            Environment.Exit((int)Error.NoArgumentsProvided);
+        }
         
-        // Show help if no arguments
-        if (Arguments.Length < 1)
-        {
-            ShowHelp();
-            return Error.NoArgumentsProvided.ToInt();
-        }
-
-        // Help arguments
-        if (Arguments.Length is 1)
-        {
-            if (Arguments[0] == "/h" || Arguments[0] == "/help")
-            {
-                ShowHelp();
-            }
-            else
-            {
-                Log.Error("Error: Bad arguments usage.");
-                ShowHelp();
-                return Error.BadArgumentsUsage.ToInt();
-            }
-            return Error.NoError.ToInt();
-        }
-
-        if (Arguments.Length is 2)
-        {
-            if (Arguments[0] == "/b" || Arguments[0] == "/build")
-            {
-                return Generate().ToInt();
-            }
-            else
-            {
-                Log.Error("Error: Bad arguments usage.");
-                ShowHelp();
-                return Error.BadArgumentsUsage.ToInt();
-            }
-        }
-        else
-        {
-            Log.Error("Error: Bad arguments usage.");
-            ShowHelp();
-            return Error.BadArgumentsUsage.ToInt();
-        }
     }
     
     private static void ShowHelp()
@@ -101,7 +89,6 @@ internal static class Program
             GenerateInMemory = true,
             GenerateExecutable = false,
             IncludeDebugInformation = true,
-            OutputAssembly = "AstroMakeGenerator",
             ReferencedAssemblies = { Assembly.GetExecutingAssembly().Location },
             
         };
@@ -149,10 +136,24 @@ internal static class Program
         
         foreach (var App in Applications)
         {
-            String Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCXXProject}");
-            using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            using VcxprojWriter Writer = new(Stream);
-            Writer.WriteApplication(Workspace, App);
+            String Filepath = null;
+            ApplicationWriter Writer = null;
+            if (App.Language == Language.C || App.Language == Language.CPlusPlus)
+            {
+                Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCXXProject}");
+                using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
+                Writer = new VcxprojWriter(Stream);
+            }
+
+            if (App.Language == Language.CSharp)
+            {
+                Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCSharpProject}");
+                using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
+                Writer = new CsprojWriter(Stream);
+            }
+           
+            Writer?.Write(Workspace, App);
+            Log.Success($"Generated {Filepath}!");
         }
         
         
@@ -161,3 +162,4 @@ internal static class Program
         return Error.NoError;
     }
 }
+

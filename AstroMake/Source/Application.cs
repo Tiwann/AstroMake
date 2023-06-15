@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 
 namespace AstroMake;
@@ -27,5 +28,10 @@ public abstract class Application
         Links = new();
         Flags = ApplicationFlags.None;
         this.Workspace = Workspace;
+    }
+
+    public String GetAbsoluteDirectory()
+    {
+        return Path.Combine(Directory.GetCurrentDirectory());
     }
 }
