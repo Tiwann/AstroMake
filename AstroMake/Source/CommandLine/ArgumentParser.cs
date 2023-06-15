@@ -24,7 +24,8 @@ public class ArgumentParser<T> where T : new()
 {
     private readonly List<String> arguments;
     private readonly ArgumentParserSettings settings;
-    private List<CommandLineOptionAttribute> attributes;
+    private readonly List<CommandLineOptionAttribute> attributes;
+    private T ParsedObject;
 
     public ArgumentParser(IEnumerable<String> Arguments)
     {
@@ -42,7 +43,13 @@ public class ArgumentParser<T> where T : new()
 
     public void Parse(Action<T> action)
     {
-        PropertyInfo[] Properties = typeof(T).GetProperties();
+        if (arguments.Count == 0)
+        {
+            throw new NoArgumentProvidedException();
+        }
+        
+        Type ParsedObjectType = typeof(T);
+        PropertyInfo[] Properties = ParsedObjectType.GetProperties();
         foreach (PropertyInfo Property in Properties)
         {
             if (Property.GetCustomAttribute(typeof(CommandLineOptionAttribute)) == null)
@@ -50,28 +57,51 @@ public class ArgumentParser<T> where T : new()
                 Log.Error($"In Class '{typeof(T).Name}': No {nameof(CommandLineOptionAttribute)} found on property {Property.Name}!");
                 continue;
             }
-            CommandLineOptionAttribute OptionAttribute = Property.GetCustomAttribute(typeof(CommandLineOptionAttribute)) as CommandLineOptionAttribute;
+            CommandLineOptionAttribute OptionAttribute = Property.GetCustomAttribute<CommandLineOptionAttribute>();
             attributes.Add(OptionAttribute);
         }
         
-        var requiredOptionsAttributes = attributes.Where(att => att.Required);
+        var RequiredOptionsAttributes = attributes.Where(att => att.Required);
 
-        foreach (var requiredOption in requiredOptionsAttributes)
+        /*if (RequiredOptionsAttributes.Any(RequiredOption => !(arguments.Contains($"/{RequiredOption.ShortName}") || arguments.Contains($"/{RequiredOption.LongName}"))))
         {
-            if (!(arguments.Contains($"/{requiredOption.ShortName}") || arguments.Contains($"/{requiredOption.LongName}")))
+            throw new BadArgumentUsageException();
+        }*/
+
+        
+        ParsedObject = new T();
+        
+        IEnumerable<String> ShortNames = attributes.Select(Attribute => Attribute.ShortName.ToString());
+        IEnumerable<String> LongNames = attributes.Select(Attribute => Attribute.LongName);
+        List<String> Names = ShortNames.Union(LongNames).ToList();
+
+        for (int Index = 0; Index < arguments.Count; Index++)
+        {
+            String Argument = arguments[Index].Remove(0, 1);
+            if (Names.Contains(Argument))
             {
-                throw new BadArgumentUsageException();
+                var PropertyName = Properties.Where(p =>
+                {
+                    CommandLineOptionAttribute Att = p.GetCustomAttribute<CommandLineOptionAttribute>();
+                    bool Check = Att.ShortName.ToString() == Argument || Att.LongName == Argument;
+                    return Check;
+                }).Select(p => p.Name);
+
+                PropertyInfo Info = ParsedObjectType.GetProperty(PropertyName.Single());
+
+
+                if (Info != null && Info.CanWrite)
+                {
+                    if (Info.PropertyType == typeof(Boolean))
+                    {
+                        Info.SetValue(ParsedObject, true);
+                    }
+                }
             }
         }
 
-        action.Invoke(new T());
 
-        foreach (String Argument in arguments)
-        {
-            if(Argument.Equals($"/{Properties..ShortName}"))
-        }
-        
-        
+        action.Invoke(ParsedObject);
     }
 
 }

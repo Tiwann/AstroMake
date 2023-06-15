@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace AstroMake;
 
 public enum Error
@@ -11,10 +13,27 @@ public enum Error
     BadArgumentsUsage = -5
 }
 
+
 public static class ErrorHelpers
 {
-    public static int ToInt(this Error e)
+    public static String ToStr(this Error e) 
     {
-        return (int)e;
+        switch (e)
+        {
+            case Error.Error:
+                return "Error";
+            case Error.NoError:
+                return "Sucess";
+            case Error.NoBuildScriptFound:
+                return "No build scripts found";
+            case Error.CompileError:
+                return "Compile error";
+            case Error.NoArgumentsProvided:
+                return "No arguments provided";
+            case Error.BadArgumentsUsage:
+                return "Bad arugument usage";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(e), e, null);
+        }
     }
 }
