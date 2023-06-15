@@ -10,3 +10,4 @@ Binaries-Intermediate
 *.vcxproj.user
 *.dll
 *.pdb
+*.DotSettings.user
