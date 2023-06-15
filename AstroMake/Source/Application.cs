@@ -9,7 +9,6 @@ public abstract class Application
     protected Workspace Workspace;
     public String Name { get; protected set; }
     public String TargetDirectory { get; protected set; }
-
     public OutputType Type { get; protected set; }
     public Language Language { get; protected set; }
     public ApplicationFlags Flags { get; protected set; }
