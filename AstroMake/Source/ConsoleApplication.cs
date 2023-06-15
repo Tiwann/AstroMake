@@ -1,7 +1,6 @@
-﻿namespace AstroMake
+﻿namespace AstroMake;
+
+public class ConsoleApplication : Application
 {
-    public class ConsoleApplication : Application
-    {
-        public ConsoleApplication() => Type = OutputType.Console;
-    }
+    public ConsoleApplication(Workspace Workspace) : base(Workspace) => Type = OutputType.Console;
 }

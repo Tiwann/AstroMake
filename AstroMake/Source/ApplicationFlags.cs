@@ -1,14 +1,11 @@
 ﻿using System;
 
-namespace AstroMake
+namespace AstroMake;
+
+[Flags]
+public enum ApplicationFlags
 {
-    [Flags]
-    public enum ApplicationFlags : sbyte
-    {
-        None = -1,
-        MultiProcessorCompile,
+    None = 0,
+    MultiProcessorCompile = 1 << 0,
         
-    }
 }
-
-

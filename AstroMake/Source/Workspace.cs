@@ -1,25 +1,58 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace AstroMake 
+namespace AstroMake;
+
+public abstract class Workspace 
 {
-    public class Workspace 
+    public String Name;
+    public String TargetDirectory;
+    public List<Configuration> Configurations;
+    public List<String> Platforms;
+    public List<System> Systems;
+    public List<Architecture> Architectures;
+    public List<String> Applications;
+
+    public Workspace()
     {
-        public String Name;
-        public String Directory;
-        public List<Configuration> Configurations;
-        public Systems Systems;
-        public Architectures Architectures;
-        public List<String> Applications;
+        Configurations = new();
+        Systems = new();
+        Architectures = new();
+        Applications = new();
+        Platforms = new();
+        TargetDirectory = global::System.IO.Directory.GetCurrentDirectory();
+    }
+    
+    public IEnumerable<String> GetConfigurationsNames()
+    {
+        IEnumerable<String> Result = new List<String>();
 
-        public Workspace()
+        if (Platforms.Count == 0)
         {
-            Directory = System.IO.Directory.GetCurrentDirectory();
+            foreach (var Config in Configurations)
+            {
+                foreach (var Architecture in Architectures)
+                {
+                    Result.ToList().Add($"{Config.Name}|{Architecture}");
+                }
+            }
         }
+        else
+        {
+            foreach (var Config in Configurations)
+            {
+                foreach (var Platform in Platforms)
+                {
+                    foreach (var Architecture in Architectures)
+                    {
+                        Result.ToList().Add($"{Platform} {Config.Name}|{Architecture}");
+                    }
+                }
+            }
+        }
+        
 
-        public bool IsValid() 
-        {
-            return !Helpers.AllStringsEmpty(Name, Directory) && Configurations.Count > 0 && Applications.Count > 0;
-        }
+        return Result;
     }
 }

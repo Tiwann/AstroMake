@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace AstroMake 
+namespace AstroMake;
+
+[Flags]
+public enum ConfigurationFlags 
 {
-    [Flags]
-    public enum ConfigurationFlags : sbyte {
-        None = -1
-    }
+    None = 0,
 }

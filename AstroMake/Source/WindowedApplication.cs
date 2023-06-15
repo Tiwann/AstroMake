@@ -1,7 +1,6 @@
-﻿namespace AstroMake
+﻿namespace AstroMake;
+
+public class WindowedApplication : Application
 {
-    public class WindowedApplication : Application
-    {
-        public WindowedApplication() => Type = OutputType.Windowed;
-    }
+    public WindowedApplication(Workspace Workspace) : base(Workspace) => Type = OutputType.Windowed;
 }

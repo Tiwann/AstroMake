@@ -1,14 +1,20 @@
 ﻿using System;
 
+namespace AstroMake;
 
-namespace AstroMake
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+public class BuildAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public sealed class Build : Attribute
+    public BuildAttribute()
     {
-        public Build()
-        {
-            
-        }
+    }
+}
+
+[AttributeUsage(AttributeTargets.Class)]
+public class WorkspaceAttribute : Attribute
+{
+    public WorkspaceAttribute()
+    {
+        
     }
 }

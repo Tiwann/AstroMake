@@ -1,7 +1,6 @@
-﻿namespace AstroMake
+﻿namespace AstroMake;
+
+public class StaticLibrary : Application
 {
-    public class StaticLibrary : Application
-    {
-        public StaticLibrary() => Type = OutputType.StaticLibrary;
-    }
+    public StaticLibrary(Workspace Workspace) : base(Workspace) => Type = OutputType.StaticLibrary;
 }

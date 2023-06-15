@@ -1,10 +1,9 @@
-﻿namespace AstroMake 
+﻿namespace AstroMake;
+
+public enum OutputType : byte
 {
-    public enum OutputType : byte
-    {
-        Console,
-        Windowed,
-        SharedLibrary,
-        StaticLibrary,
-    }
+    Console,
+    Windowed,
+    SharedLibrary,
+    StaticLibrary,
 }

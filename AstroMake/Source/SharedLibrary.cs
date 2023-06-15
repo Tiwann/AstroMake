@@ -1,7 +1,6 @@
-﻿namespace AstroMake
+﻿namespace AstroMake;
+
+public class SharedLibrary : Application
 {
-    public class SharedLibrary : Application
-    {
-        public SharedLibrary() => Type = OutputType.SharedLibrary;
-    }
+    public SharedLibrary(Workspace Workspace) : base(Workspace) => Type = OutputType.SharedLibrary;
 }

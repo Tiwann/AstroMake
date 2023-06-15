@@ -1,9 +1,8 @@
-﻿namespace AstroMake 
+﻿namespace AstroMake;
+
+public enum Language
 {
-    public enum Language
-    {
-        C,
-        CPlusPlus,
-        CSharp
-    }
+    C,
+    CPlusPlus,
+    CSharp
 }
