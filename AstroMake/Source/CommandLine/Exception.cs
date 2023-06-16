@@ -6,7 +6,7 @@ namespace AstroMake;
 public class AstroException : Exception
 {
     public Error Error { get; protected set; }
-    public AstroException()
+    protected AstroException()
     {
     }
 }

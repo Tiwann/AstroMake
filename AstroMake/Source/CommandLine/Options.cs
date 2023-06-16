@@ -1,6 +1,4 @@
-﻿
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 public class Options
 {
