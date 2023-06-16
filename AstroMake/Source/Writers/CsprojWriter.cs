@@ -12,7 +12,7 @@ public class CsprojWriter : ApplicationWriter
     }
 
 
-    public override void Write(Workspace Workspace, Application Application)
+    public override void Write(Solution Solution, Application Application)
     {
         
     }

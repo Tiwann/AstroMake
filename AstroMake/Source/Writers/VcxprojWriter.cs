@@ -19,7 +19,7 @@ public class VcxprojWriter : ApplicationWriter
         writer.WriteEndAttribute();
     }
 
-    public override void Write(Workspace Workspace, Application Application)
+    public override void Write(Solution Solution, Application Application)
     {
         try
         {
@@ -33,13 +33,13 @@ public class VcxprojWriter : ApplicationWriter
             WriteAttribute("xmlns", XmlStatics.XmlNamespace);
                 writer.WriteStartElement("ItemGroup");
                 WriteAttribute("Label", "ProjectConfigurations");
-                    foreach (Configuration Configuration in Workspace.Configurations)
+                    foreach (Configuration Configuration in Solution.Configurations)
                     {
-                        foreach (Architecture Architecture in Workspace.Architectures)
+                        foreach (Architecture Architecture in Solution.Architectures)
                         {
-                            foreach (String Platform in Workspace.Platforms)
+                            foreach (String Platform in Solution.Platforms)
                             {
-                                String ConfigName = Workspace.Platforms.Count == 0 ? $"{Configuration.Name}|{Architecture}" : $"{Platform} {Configuration.Name}|{Architecture}";
+                                String ConfigName = Solution.Platforms.Count == 0 ? $"{Configuration.Name}|{Architecture}" : $"{Configuration.Name} {Platform}|{Architecture}";
                                 writer.WriteStartElement("ProjectConfiguration");
                                 WriteAttribute("Include", ConfigName);
                             
