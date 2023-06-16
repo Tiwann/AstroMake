@@ -36,6 +36,6 @@ public class Version : Object, IComparable<Version>
         return $"{Major}.{Minor}";
     }
 
-    public static Version AstroVersion = new (1, 0);
+    public static readonly Version AstroVersion = new (1, 0);
 }
 

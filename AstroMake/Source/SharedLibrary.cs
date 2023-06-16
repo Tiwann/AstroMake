@@ -2,5 +2,5 @@
 
 public class SharedLibrary : Application
 {
-    public SharedLibrary(Workspace Workspace) : base(Workspace) => Type = OutputType.SharedLibrary;
+    public SharedLibrary(Solution Solution) : base(Solution) => Type = OutputType.SharedLibrary;
 }

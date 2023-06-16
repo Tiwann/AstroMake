@@ -2,5 +2,5 @@
 
 public class StaticLibrary : Application
 {
-    public StaticLibrary(Workspace Workspace) : base(Workspace) => Type = OutputType.StaticLibrary;
+    public StaticLibrary(Solution Solution) : base(Solution) => Type = OutputType.StaticLibrary;
 }

@@ -2,5 +2,5 @@
 
 public class WindowedApplication : Application
 {
-    public WindowedApplication(Workspace Workspace) : base(Workspace) => Type = OutputType.Windowed;
+    public WindowedApplication(Solution Solution) : base(Solution) => Type = OutputType.Windowed;
 }
