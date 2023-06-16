@@ -22,7 +22,7 @@ internal static class Program
         // Parse the arguments
         try
         {
-            ArgumentParser<Options> Parser = new ArgumentParser<Options>(Arguments, ArgumentParserSettings.Default);
+            ArgumentParser<Options> Parser = new ArgumentParser<Options>(Arguments, ArgumentParserSettings.Default.WithAllowNoArguments(true));
             Parser.Parse(options =>
             {
                 if (options.Help)
@@ -30,7 +30,7 @@ internal static class Program
                     ShowHelp();
                 }
 
-                if (options.Type is Options.BuildType.None)
+                if (options.Type.Equals("vstudio"))
                 {
                     Generate();
                 }
@@ -40,13 +40,13 @@ internal static class Program
         {
             Log.Error(Exception.Error.ToStr());
             ShowHelp();
-            Environment.Exit((int)Error.BadArgumentsUsage);
+            Environment.Exit(Exception.Code);
         }
         catch (NoArgumentProvidedException Exception)
         {
             Log.Error(Exception.Error.ToStr());
             ShowHelp();
-            Environment.Exit((int)Error.NoArgumentsProvided);
+            Environment.Exit(Exception.Code);
         }
         
     }
@@ -63,7 +63,7 @@ internal static class Program
         Log.Trace("    xcode       Generate XCode Project");
     }
 
-    private static Error Generate()
+    private static void Generate()
     {
         String CurrentDirectory = Directory.GetCurrentDirectory();
         Log.Trace($"Current Working Directory: {CurrentDirectory}");
@@ -71,7 +71,7 @@ internal static class Program
         if (BuildFilepaths.Count <= 0)
         {
             Log.Error("No build scripts found!");
-            return Error.NoBuildScriptFound;
+            return;
         }
         
         Log.Trace($"Found {BuildFilepaths.Count} build script(s):");
@@ -102,7 +102,8 @@ internal static class Program
                 Log.Error($"{CompileError.ErrorText}.");
                 Log.Error($"File:{CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}");
             }
-            return Error.CompileError;
+
+            return;
         }
         Stopwatch.Stop();
         Log.Success($"Compilation successful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s.");
@@ -146,7 +147,6 @@ internal static class Program
         
         
         Log.Success($"Visual Studio Solution Generation sucessful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s");
-        return Error.NoError;
     }
 }
 

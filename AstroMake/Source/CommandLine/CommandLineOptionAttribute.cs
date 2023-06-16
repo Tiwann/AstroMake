@@ -29,6 +29,8 @@ public class CommandLineOptionAttribute : Attribute
     /// </summary>
     public bool Required { get; }
 
+    public String[] PossibleValues;
+
 
     public CommandLineOptionAttribute(Char ShortName, String LongName, String HelpText, bool Required)
     {

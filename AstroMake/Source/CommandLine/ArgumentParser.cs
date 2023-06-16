@@ -85,12 +85,12 @@ public class ArgumentParser<Class> where Class : new()
         for (int Index = 0; Index < arguments.Count; Index++)
         {
             String Argument = arguments[Index].Remove(0, 1);
-            if (Names.Contains(Argument))
+            if (Names.Contains(Argument.Split(settings.AssignmentCharacter)[0]))
             {
                 var PropertyName = Properties.Where(p =>
                 {
                     CommandLineOptionAttribute Att = p.GetCustomAttribute<CommandLineOptionAttribute>();
-                    bool Check = Att.ShortName.ToString() == Argument || Att.LongName == Argument;
+                    bool Check = Att.ShortName.ToString() == Argument.Split(settings.AssignmentCharacter)[0] || Att.LongName == Argument.Split(settings.AssignmentCharacter)[0];
                     return Check;
                 }).Select(p => p.Name);
 
@@ -102,6 +102,13 @@ public class ArgumentParser<Class> where Class : new()
                     if (Info.PropertyType == typeof(Boolean))
                     {
                         Info.SetValue(ParsedObject, true);
+                        continue;
+                    }
+
+                    if (Info.PropertyType == typeof(String))
+                    {
+                        Info.SetValue(ParsedObject, Argument.Split(settings.AssignmentCharacter)[1]);
+                        continue;
                     }
                 }
             }

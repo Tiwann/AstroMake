@@ -19,15 +19,22 @@ public struct ArgumentParserSettings
 
 
     /// <summary>
+    /// Assignment character
+    /// </summary>
+    public readonly Char AssignmentCharacter;
+
+
+    /// <summary>
     /// Tell the parser that the program could run without any arguemnts
     /// </summary>
     public Boolean AllowNoArguments = false;
     
     
-    public ArgumentParserSettings(String ShortArgumentPrefix, String LongArgumentPrefix)
+    public ArgumentParserSettings(String ShortArgumentPrefix, String LongArgumentPrefix, Char AssignmentCharacter)
     {
         this.ShortArgumentPrefix = ShortArgumentPrefix;
         this.LongArgumentPrefix = LongArgumentPrefix;
+        this.AssignmentCharacter = AssignmentCharacter;
     }
 
     public ArgumentParserSettings WithAllowNoArguments(Boolean value)
@@ -39,14 +46,14 @@ public struct ArgumentParserSettings
     
     /// <summary>
     /// Defaut argument setting.
-    /// -> program /a /arg
+    /// -> program /a /arg /arg:value
     /// </summary>
-    public static ArgumentParserSettings Default = new("/", "/");
+    public static ArgumentParserSettings Default = new("/", "/", ':');
     
     
     /// <summary>
     /// Unix style argument settings
-    /// -> program -a --arg
+    /// -> program -a --arg --arg=value
     /// </summary>
-    public static ArgumentParserSettings UnixStyle = new("-", "--");
+    public static ArgumentParserSettings UnixStyle = new("-", "--", '=');
 }
