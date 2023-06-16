@@ -8,18 +8,20 @@ public class ApplicationWriter : IDisposable
 {
     protected XmlTextWriter writer;
 
-    public ApplicationWriter(Stream Output)
+    protected ApplicationWriter(Stream Output)
     {
         writer = XmlStatics.CreateWriter(Output);
     }
 
-    public virtual void Write(Workspace Workspace, Application Application)
+    public virtual void Write(Solution Solution, Application Application)
     {
-        
+
     }
+
 
     public void Dispose()
     {
-        writer?.Dispose();
+        writer.Dispose();
+        writer.BaseStream?.Dispose();
     }
 }
