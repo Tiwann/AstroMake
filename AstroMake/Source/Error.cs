@@ -13,9 +13,9 @@ public enum Error
     BadArgumentsUsage = -5
 }
 
-
 public static class ErrorHelpers
 {
+    
     public static String ToStr(this Error e) 
     {
         switch (e)
