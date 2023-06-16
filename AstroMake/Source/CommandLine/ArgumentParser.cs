@@ -5,74 +5,81 @@ using System.Reflection;
 
 namespace AstroMake;
 
-public struct ArgumentParserSettings
+
+/// <summary>
+/// Template class that parses command line arguments into an object of class Class
+/// </summary>
+/// <typeparam name="Class">The class to fill atrguments info to</typeparam>
+public class ArgumentParser<Class> where Class : new()
 {
-    public readonly String ShortArgumentPrefix;
-    public readonly String LongArgumentPrefix;
-
-    public ArgumentParserSettings(String ShortArgumentPrefix, String LongArgumentPrefix)
-    {
-        this.ShortArgumentPrefix = ShortArgumentPrefix;
-        this.LongArgumentPrefix = LongArgumentPrefix;
-    }
-
-    public static ArgumentParserSettings Default = new ArgumentParserSettings("/", "/");
-    public static ArgumentParserSettings UnixStyle = new ArgumentParserSettings("-", "--");
-}
-
-public class ArgumentParser<T> where T : new()
-{
+    /// <summary>
+    /// A copy of the arguments
+    /// </summary>
     private readonly List<String> arguments;
+    
+    /// <summary>
+    /// Parser settings
+    /// <see cref="ArgumentParserSettings"/>
+    /// </summary>
     private readonly ArgumentParserSettings settings;
-    private readonly List<CommandLineOptionAttribute> attributes;
-    private T ParsedObject;
 
     public ArgumentParser(IEnumerable<String> Arguments)
     {
         arguments = Arguments.ToList();
         settings = ArgumentParserSettings.Default;
-        attributes = new List<CommandLineOptionAttribute>();
     }
 
     public ArgumentParser(IEnumerable<String> Arguments, ArgumentParserSettings Settings)
     {
         arguments = Arguments.ToList();
         settings = Settings;
-        attributes = new List<CommandLineOptionAttribute>();
     }
 
-    public void Parse(Action<T> action)
+    /// <summary>
+    /// Parses the arguments
+    /// </summary>
+    /// <param name="action">Function that will be called with the parsed object. Give the user the possility to handle the parsed object's properties</param>
+    /// <exception cref="NoArgumentProvidedException">No arguments were found and AllowNoArguments is false <see cref="ArgumentParserSettings"/></exception>
+    /// <exception cref="BadArgumentUsageException">A required option was not found int the arguments list</exception>
+    /// <exception cref="BadArgumentUsageException">The arguments don't have the right formats</exception>
+    public void Parse(Action<Class> action)
     {
-        if (arguments.Count == 0)
+        if (!settings.AllowNoArguments)
         {
-            throw new NoArgumentProvidedException();
+            if (arguments.Count == 0)
+            {
+                throw new NoArgumentProvidedException();
+            }
         }
         
-        Type ParsedObjectType = typeof(T);
+        Type ParsedObjectType = typeof(Class);
         PropertyInfo[] Properties = ParsedObjectType.GetProperties();
+        List<CommandLineOptionAttribute> Attributes = new();
+
+        // Check if all properties have a CommandLineOption attribute
         foreach (PropertyInfo Property in Properties)
         {
             if (Property.GetCustomAttribute(typeof(CommandLineOptionAttribute)) == null)
             {
-                Log.Error($"In Class '{typeof(T).Name}': No {nameof(CommandLineOptionAttribute)} found on property {Property.Name}!");
+                Log.Error($"In Class '{typeof(Class).Name}': No {nameof(CommandLineOptionAttribute)} found on property {Property.Name}!");
                 continue;
             }
             CommandLineOptionAttribute OptionAttribute = Property.GetCustomAttribute<CommandLineOptionAttribute>();
-            attributes.Add(OptionAttribute);
+            Attributes.Add(OptionAttribute);
         }
         
-        var RequiredOptionsAttributes = attributes.Where(att => att.Required);
-
-        /*if (RequiredOptionsAttributes.Any(RequiredOption => !(arguments.Contains($"/{RequiredOption.ShortName}") || arguments.Contains($"/{RequiredOption.LongName}"))))
+        // Throw a bad usage exception if one of required arguments are not found
+        var RequiredOptionsAttributes = Attributes.Where(att => att.Required);
+        if (RequiredOptionsAttributes.Any(RequiredOption => arguments.Contains($"{settings.ShortArgumentPrefix}{RequiredOption.ShortName}") || arguments.Contains($"{settings.LongArgumentPrefix}{RequiredOption.LongName}")))
         {
             throw new BadArgumentUsageException();
-        }*/
+        }
 
         
-        ParsedObject = new T();
+        Class ParsedObject = new();
         
-        IEnumerable<String> ShortNames = attributes.Select(Attribute => Attribute.ShortName.ToString());
-        IEnumerable<String> LongNames = attributes.Select(Attribute => Attribute.LongName);
+        IEnumerable<String> ShortNames = Attributes.Select(Attribute => Attribute.ShortName.ToString());
+        IEnumerable<String> LongNames = Attributes.Select(Attribute => Attribute.LongName);
         List<String> Names = ShortNames.Union(LongNames).ToList();
 
         for (int Index = 0; Index < arguments.Count; Index++)
@@ -99,8 +106,8 @@ public class ArgumentParser<T> where T : new()
                 }
             }
         }
-
-
+        
+        
         action.Invoke(ParsedObject);
     }
 

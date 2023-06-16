@@ -115,9 +115,9 @@ internal static class Program
         Assembly CompiledAssembly = CompileResults.CompiledAssembly;
 
         // Current workspace is the first workspace that as a BuildAttribute
-        Workspace Workspace = Activator.CreateInstance(CompiledAssembly.GetTypes().Single(Type =>
-            Type.IsSubclassOf(typeof(Workspace)) &&
-            Type.GetCustomAttribute(typeof(BuildAttribute)) != null)) as Workspace;
+        Solution Solution = Activator.CreateInstance(CompiledAssembly.GetTypes().Single(Type =>
+            Type.IsSubclassOf(typeof(Solution)) &&
+            Type.GetCustomAttribute(typeof(BuildAttribute)) != null)) as Solution;
 
         
         IEnumerable<Type> ApplicationsTypes = CompiledAssembly.GetTypes().Where(Type =>
@@ -129,30 +129,17 @@ internal static class Program
         List<Application> Applications = new List<Application>();
         foreach (Type Type in ApplicationsTypes)
         {
-            Applications.Add(Activator.CreateInstance(Type, Workspace) as Application);
+            Applications.Add(Activator.CreateInstance(Type, Solution) as Application);
         }
         
         
         
         foreach (var App in Applications)
         {
-            String Filepath = null;
-            ApplicationWriter Writer = null;
-            if (App.Language == Language.C || App.Language == Language.CPlusPlus)
-            {
-                Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCXXProject}");
-                using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
-                Writer = new VcxprojWriter(Stream);
-            }
-
-            if (App.Language == Language.CSharp)
-            {
-                Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCSharpProject}");
-                using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
-                Writer = new CsprojWriter(Stream);
-            }
-           
-            Writer?.Write(Workspace, App);
+            String Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCXXProject}");
+            using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            using VcxprojWriter Writer = new(Stream);     
+            Writer.Write(Solution, App);
             Log.Success($"Generated {Filepath}!");
         }
         

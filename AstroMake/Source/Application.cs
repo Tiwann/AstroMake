@@ -1,37 +1,75 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-
 
 namespace AstroMake;
 
+
+/// <summary>
+/// Describes an Application/Project
+/// </summary>
 public abstract class Application 
 {
-    protected Workspace Workspace;
-    public String Name { get; protected set; }
+    /// <summary>
+    /// Reference to a <see cref="Solution"/>
+    /// </summary>
+    protected Solution Solution;
+    
+    /// <summary>
+    /// Application name
+    /// </summary>
+    protected String Name { get; set; }
+    
+    /// <summary>
+    /// Application target directory
+    /// </summary>
     public String TargetDirectory { get; protected set; }
-    public OutputType Type { get; protected set; }
+    
+    
+    /// <summary>
+    /// Application <see cref="OutputType"/>
+    /// </summary>
+    protected OutputType Type { get; set; }
+    
+    
+    /// <summary>
+    /// Application <see cref="Language"/>
+    /// </summary>
     public Language Language { get; protected set; }
-    public ApplicationFlags Flags { get; protected set; }
+    
+    
+    /// <summary>
+    /// <see cref="ApplicationFlags"/>
+    /// </summary>
+    protected ApplicationFlags Flags { get; set; }
 
-    public List<String> Files { get; protected set; }
-    public List<String> IncludeDirectories { get; protected set; }
-    public List<String> Defines { get; protected set; }
+    /// <summary>
+    /// List of files to include. Entries could be absolute filepaths, relative filepaths, or wildcards
+    /// </summary>
+    protected List<String> Files { get; set; }
+    
+    /// <summary>
+    /// List of Include directories. Entries could be absolute paths, relative paths, or wildcards
+    /// </summary>
+    protected List<String> IncludeDirectories { get; set; }
+    
+    /// <summary>
+    /// List of preprocessor defines. 
+    /// </summary>
+    protected List<String> Defines { get; set; }
+    
+    /// <summary>
+    /// List of Applications to link against. Should be application's name
+    /// </summary>
     public List<String> Links { get; protected set; }
 
 
-    public Application(Workspace Workspace)
+    protected Application(Solution Solution)
     {
         Files = new();
         IncludeDirectories = new();
         Defines = new();
         Links = new();
         Flags = ApplicationFlags.None;
-        this.Workspace = Workspace;
-    }
-
-    public String GetAbsoluteDirectory()
-    {
-        return Path.Combine(Directory.GetCurrentDirectory());
+        this.Solution = Solution;
     }
 }
