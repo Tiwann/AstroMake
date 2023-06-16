@@ -2,5 +2,5 @@
 
 public class ConsoleApplication : Application
 {
-    public ConsoleApplication(Workspace Workspace) : base(Workspace) => Type = OutputType.Console;
+    public ConsoleApplication(Solution Solution) : base(Solution) => Type = OutputType.Console;
 }
