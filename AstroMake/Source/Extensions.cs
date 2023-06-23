@@ -2,9 +2,9 @@
 
 public static class Extensions
 {
-    public static String VisualCXXProject => ".vcxproj";
-    public static String VisualCXXSolution => ".sln";
-    public static String VisualCSharpProject => ".csproj";
-    public static String Makefile => "Makefile";
-    public static String XCodeProject => ".xcodeproj";
+    public static string VisualCXXProject => ".vcxproj";
+    public static string VisualCXXSolution => ".sln";
+    public static string VisualCSharpProject => ".csproj";
+    public static string Makefile => "Makefile";
+    public static string XCodeProject => ".xcodeproj";
 }

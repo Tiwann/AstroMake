@@ -11,7 +11,7 @@ public class Configuration
     /// <summary>
     /// Configuration's name
     /// </summary>
-    public String Name;
+    public string Name;
     
     /// <summary>
     /// Flags
@@ -19,13 +19,13 @@ public class Configuration
     /// </summary>
     public ConfigurationFlags Flags;
 
-    public Configuration(String Name, ConfigurationFlags Flags)
+    public Configuration(string Name, ConfigurationFlags Flags)
     {
         this.Name = Name;
         this.Flags = Flags;
     }
 
-    public Configuration(String Name)
+    public Configuration(string Name)
     {
         this.Name = Name;
         Flags = ConfigurationFlags.None;

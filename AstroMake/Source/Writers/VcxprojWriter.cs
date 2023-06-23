@@ -12,7 +12,7 @@ public class VcxprojWriter : ApplicationWriter
     {
     }
     
-    private void WriteAttribute(String Name, String Value)
+    private void WriteAttribute(string Name, string Value)
     {
         writer.WriteStartAttribute(Name);
         writer.WriteValue(Value);
@@ -37,9 +37,9 @@ public class VcxprojWriter : ApplicationWriter
                     {
                         foreach (Architecture Architecture in Solution.Architectures)
                         {
-                            foreach (String Platform in Solution.Platforms)
+                            foreach (string Platform in Solution.Platforms)
                             {
-                                String ConfigName = Solution.Platforms.Count == 0 ? $"{Configuration.Name}|{Architecture}" : $"{Configuration.Name} {Platform}|{Architecture}";
+                                string ConfigName = Solution.Platforms.Count == 0 ? $"{Configuration.Name}|{Architecture}" : $"{Configuration.Name} {Platform}|{Architecture}";
                                 writer.WriteStartElement("ProjectConfiguration");
                                 WriteAttribute("Include", ConfigName);
                             

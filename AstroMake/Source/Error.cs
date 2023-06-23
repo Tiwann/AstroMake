@@ -16,7 +16,7 @@ public enum Error
 public static class ErrorHelpers
 {
     
-    public static String ToStr(this Error e) 
+    public static string ToStr(this Error e) 
     {
         switch (e)
         {

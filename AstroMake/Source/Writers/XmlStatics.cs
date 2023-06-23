@@ -8,7 +8,7 @@ namespace AstroMake;
 
 public static class XmlStatics
 {
-    public static readonly String XmlNamespace = "http://schemas.microsoft.com/developer/msbuild/2003";
+    public static readonly string XmlNamespace = "http://schemas.microsoft.com/developer/msbuild/2003";
 
     public static XmlTextWriter CreateWriter(Stream Output)
     {

@@ -14,12 +14,12 @@ public abstract class Solution
     /// <summary>
     /// Solution name
     /// </summary>
-    public String Name;
+    public string Name;
     
     /// <summary>
     /// Solution's target directory
     /// </summary>
-    public String TargetDirectory;
+    public string TargetDirectory;
     
     /// <summary>
     /// Configurations
@@ -29,7 +29,7 @@ public abstract class Solution
     /// <summary>
     /// Platforms.
     /// </summary>
-    public List<String> Platforms { get; protected set; }
+    public List<string> Platforms { get; protected set; }
     
     /// <summary>
     /// Systems.
@@ -44,7 +44,7 @@ public abstract class Solution
     /// <summary>
     /// Applications linked to this solutions
     /// </summary>
-    public List<String> Applications { get; set; }
+    public List<string> Applications { get; set; }
 
     protected Solution()
     {

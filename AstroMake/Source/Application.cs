@@ -17,12 +17,12 @@ public abstract class Application
     /// <summary>
     /// Application name
     /// </summary>
-    protected String Name { get; set; }
+    protected string Name { get; set; }
     
     /// <summary>
     /// Application target directory
     /// </summary>
-    public String TargetDirectory { get; protected set; }
+    public string TargetDirectory { get; protected set; }
     
     
     /// <summary>
@@ -45,22 +45,22 @@ public abstract class Application
     /// <summary>
     /// List of files to include. Entries could be absolute filepaths, relative filepaths, or wildcards
     /// </summary>
-    protected List<String> Files { get; set; }
+    protected List<string> Files { get; set; }
     
     /// <summary>
     /// List of Include directories. Entries could be absolute paths, relative paths, or wildcards
     /// </summary>
-    protected List<String> IncludeDirectories { get; set; }
+    protected List<string> IncludeDirectories { get; set; }
     
     /// <summary>
     /// List of preprocessor defines. 
     /// </summary>
-    protected List<String> Defines { get; set; }
+    protected List<string> Defines { get; set; }
     
     /// <summary>
     /// List of Applications to link against. Should be application's name
     /// </summary>
-    public List<String> Links { get; protected set; }
+    public List<string> Links { get; protected set; }
 
 
     protected Application(Solution Solution)

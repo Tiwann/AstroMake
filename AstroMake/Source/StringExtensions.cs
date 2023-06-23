@@ -5,12 +5,14 @@ namespace AstroMake;
 
 public static class StringExtensions
 {
-    public static Boolean ToBool(this String value)
+    public static Boolean ToBool(this string value)
     {
-        String[] TrueValues = { "true", "True", "TRUE", "1" };
-        String[] FalseValues = { "false", "False", "FALSE", "0" };
+        string[] TrueValues = { "true", "True", "TRUE", "1" };
+        string[] FalseValues = { "false", "False", "FALSE", "0" };
 
-        return TrueValues.Any(val => val.Equals(value)) || FalseValues.Any(val => val.Equals(value));
+        if (TrueValues.Any(val => val.Equals(value))) return true;
+        if (FalseValues.Any(val => val.Equals(value))) return false;
+        return false;
     }
     
 }

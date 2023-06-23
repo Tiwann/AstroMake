@@ -31,7 +31,7 @@ public class Version : Object, IComparable<Version>
     }
 
 
-    public override String ToString()
+    public override string ToString()
     {
         return $"{Major}.{Minor}";
     }
