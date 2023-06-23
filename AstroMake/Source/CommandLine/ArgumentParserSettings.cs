@@ -1,59 +1,24 @@
-﻿using System;
+﻿using System.Text.RegularExpressions;
+
 
 namespace AstroMake;
 
-/// <summary>
-/// Set Argument Parser parameters such as argument formats
-/// </summary>
-public struct ArgumentParserSettings
+
+public class ArgumentParserSettings
 {
-    /// <summary>
-    /// Characters for short format arguments
-    /// </summary>
-    public readonly String ShortArgumentPrefix;
-    
-    /// <summary>
-    /// Characters for long format arguments
-    /// </summary>
-    public readonly String LongArgumentPrefix;
+    public readonly string ShortFormatPrefix;
+    public readonly string LongFormatPrefix;
+    public readonly char AssigmentCharacter;
 
+    public Regex Regex => new(@$"^({ShortFormatPrefix}|{LongFormatPrefix})[A-Za-z]+({AssigmentCharacter}[A-Za-z0-9:/\\]+)?$");
 
-    /// <summary>
-    /// Assignment character
-    /// </summary>
-    public readonly Char AssignmentCharacter;
-
-
-    /// <summary>
-    /// Tell the parser that the program could run without any arguemnts
-    /// </summary>
-    public Boolean AllowNoArguments = false;
-    
-    
-    public ArgumentParserSettings(String ShortArgumentPrefix, String LongArgumentPrefix, Char AssignmentCharacter)
+    public ArgumentParserSettings(string Short, string Long, char Assignment)
     {
-        this.ShortArgumentPrefix = ShortArgumentPrefix;
-        this.LongArgumentPrefix = LongArgumentPrefix;
-        this.AssignmentCharacter = AssignmentCharacter;
+        ShortFormatPrefix = Short;
+        LongFormatPrefix = Long;
+        AssigmentCharacter = Assignment;
     }
-
-    public ArgumentParserSettings WithAllowNoArguments(Boolean value)
-    {
-        AllowNoArguments = value;
-        return this;
-    }
-
     
-    /// <summary>
-    /// Defaut argument setting.
-    /// -> program /a /arg /arg:value
-    /// </summary>
-    public static ArgumentParserSettings Default = new("/", "/", ':');
-    
-    
-    /// <summary>
-    /// Unix style argument settings
-    /// -> program -a --arg --arg=value
-    /// </summary>
-    public static ArgumentParserSettings UnixStyle = new("-", "--", '=');
+    public static readonly ArgumentParserSettings WindowsStyle = new("/", "/", ':');
+    public static readonly ArgumentParserSettings UnixStyle = new("-", "--", '=');
 }

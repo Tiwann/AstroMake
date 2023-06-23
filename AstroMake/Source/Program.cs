@@ -4,51 +4,44 @@ using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
 
 namespace AstroMake;
 
+
 internal static class Program
 {
+    public static String ScriptSearchRootDirectory = Directory.GetCurrentDirectory();
+    
     private static void Main(String[] Arguments)
     {
-        // Hello Astro Make
+        // Hello Asro Make
         Log.Trace($"Astro Make {Version.AstroVersion}");
         Log.Trace("Copyright (C) 2023 Erwann Messoah");
         Log.Trace("Using dotnet framework 4.8.1\n");
 
-        // Parse the arguments
+        //Setting up the parser
+        ArgumentParser Parser = new(Arguments, ArgumentParserSettings.WindowsStyle);
+        Parser.AddOptions(new Collection<CommandLineOption>
+        {
+            new(ShortName: 'h', LongName: "help",   Required: false, AllowMultiple: false),
+            new(ShortName: 'b', LongName: "build",  Required: true,  AllowMultiple: false),
+            new(ShortName: 's', LongName: "source", Required: false, AllowMultiple: true),
+        });
+        
+        // Parser the arguments
         try
         {
-            ArgumentParser<Options> Parser = new ArgumentParser<Options>(Arguments, ArgumentParserSettings.Default.WithAllowNoArguments(true));
-            Parser.Parse(options =>
-            {
-                if (options.Help)
-                {
-                    ShowHelp();
-                }
-
-                if (options.Type.Equals("vstudio"))
-                {
-                    Generate();
-                }
-            });
+            Parser.Parse();
         }
-        catch (BadArgumentUsageException Exception)
+        catch (InvalidCommandLineArgumentException Exception)
         {
-            Log.Error(Exception.Error.ToStr());
+            Log.Error($"{Exception.Message}");
             ShowHelp();
-            Environment.Exit(Exception.Code);
         }
-        catch (NoArgumentProvidedException Exception)
-        {
-            Log.Error(Exception.Error.ToStr());
-            ShowHelp();
-            Environment.Exit(Exception.Code);
-        }
-        
     }
     
     private static void ShowHelp()
@@ -65,7 +58,7 @@ internal static class Program
 
     private static void Generate()
     {
-        String CurrentDirectory = Directory.GetCurrentDirectory();
+        String CurrentDirectory = ScriptSearchRootDirectory;
         Log.Trace($"Current Working Directory: {CurrentDirectory}");
         List<String> BuildFilepaths = Directory.EnumerateFiles(CurrentDirectory, "*.Astro.cs", SearchOption.AllDirectories).ToList();
         if (BuildFilepaths.Count <= 0)
@@ -81,7 +74,7 @@ internal static class Program
         }
         
         Log.Trace("Compiling scripts...");
-        Stopwatch Stopwatch = new Stopwatch();
+        Stopwatch Stopwatch = new();
         Stopwatch.Start();
         using CSharpCodeProvider CodeProvider = new CSharpCodeProvider();
         CompilerParameters Parameters = new CompilerParameters

@@ -1,121 +1,90 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 
 namespace AstroMake;
 
-
-/// <summary>
-/// Template class that parses command line arguments into an object of class Class
-/// </summary>
-/// <typeparam name="Class">The class to fill atrguments info to</typeparam>
-public class ArgumentParser<Class> where Class : new()
+public class ArgumentParser
 {
-    /// <summary>
-    /// A copy of the arguments
-    /// </summary>
-    private readonly List<String> arguments;
+    private IEnumerable<string> Arguments { get; }
+    public ArgumentParserSettings Settings { get; }
+
+
+    private Dictionary<CommandLineOption, List<object>> ParsedArguments;
+    private Collection<CommandLineOption> Options = new();
+    private readonly IEnumerable<char> PrefixCharacters;
+
+    public ArgumentParser(IEnumerable<string> Arguments, ArgumentParserSettings Settings)
+    {
+        this.Settings = Settings;
+        this.Arguments = Arguments;
+        ParsedArguments = new();
+        PrefixCharacters = Settings.ShortFormatPrefix.ToCharArray().Union(Settings.LongFormatPrefix.ToCharArray());
+    }
     
-    /// <summary>
-    /// Parser settings
-    /// <see cref="ArgumentParserSettings"/>
-    /// </summary>
-    private readonly ArgumentParserSettings settings;
-
-    public ArgumentParser(IEnumerable<String> Arguments)
+    public bool IsArgumentValid(string Argument)
     {
-        arguments = Arguments.ToList();
-        settings = ArgumentParserSettings.Default;
+        var ShortNames = Options.Select(O => O.ShortName);
+        var LongNames = Options.Select(O => O.LongName);
+        string OptionName = GetOptionNameFromArgument(Argument);
+        return Settings.Regex.IsMatch(Argument) && (ShortNames.Contains(OptionName[0]) || LongNames.Contains(OptionName));
     }
 
-    public ArgumentParser(IEnumerable<String> Arguments, ArgumentParserSettings Settings)
+    private string GetOptionNameFromArgument(string Argument)
     {
-        arguments = Arguments.ToList();
-        settings = Settings;
+        int AssignmentPosition = Argument.IndexOf(Settings.AssigmentCharacter);
+        string TrimedArgument = Argument.TrimStart(PrefixCharacters.ToArray());
+        return AssignmentPosition == -1 ? TrimedArgument : TrimedArgument.Substring(0, AssignmentPosition - 1);
     }
 
-    /// <summary>
-    /// Parses the arguments
-    /// </summary>
-    /// <param name="action">Function that will be called with the parsed object. Give the user the possility to handle the parsed object's properties</param>
-    /// <exception cref="NoArgumentProvidedException">No arguments were found and AllowNoArguments is false <see cref="ArgumentParserSettings"/></exception>
-    /// <exception cref="BadArgumentUsageException">A required option was not found int the arguments list</exception>
-    /// <exception cref="BadArgumentUsageException">The arguments don't have the right formats</exception>
-    public void Parse(Action<Class> action)
+    private (string, object) SplitArgument(string Argument)
     {
-        if (!settings.AllowNoArguments)
+        string Key;
+        object Value;
+        int AssignmentPosition = Argument.IndexOf(Settings.AssigmentCharacter);
+        if (AssignmentPosition == -1)
         {
-            if (arguments.Count == 0)
-            {
-                throw new NoArgumentProvidedException();
-            }
+            Key = Argument.TrimStart(PrefixCharacters.ToArray());
+            Value = true;
         }
-        
-        Type ParsedObjectType = typeof(Class);
-        PropertyInfo[] Properties = ParsedObjectType.GetProperties();
-        List<CommandLineOptionAttribute> Attributes = new();
-
-        // Check if all properties have a CommandLineOption attribute
-        foreach (PropertyInfo Property in Properties)
+        else
         {
-            if (Property.GetCustomAttribute(typeof(CommandLineOptionAttribute)) == null)
-            {
-                Log.Error($"In Class '{typeof(Class).Name}': No {nameof(CommandLineOptionAttribute)} found on property {Property.Name}!");
-                continue;
-            }
-            CommandLineOptionAttribute OptionAttribute = Property.GetCustomAttribute<CommandLineOptionAttribute>();
-            Attributes.Add(OptionAttribute);
-        }
-        
-        // Throw a bad usage exception if one of required arguments are not found
-        var RequiredOptionsAttributes = Attributes.Where(att => att.Required);
-        if (RequiredOptionsAttributes.Any(RequiredOption => arguments.Contains($"{settings.ShortArgumentPrefix}{RequiredOption.ShortName}") || arguments.Contains($"{settings.LongArgumentPrefix}{RequiredOption.LongName}")))
-        {
-            throw new BadArgumentUsageException();
+            string TrimedKey = Argument.TrimStart(PrefixCharacters.ToArray());
+            Key = TrimedKey.Substring(0, AssignmentPosition - 1);
+            Value = Argument.Substring(AssignmentPosition + 1);
         }
 
-        
-        Class ParsedObject = new();
-        
-        IEnumerable<String> ShortNames = Attributes.Select(Attribute => Attribute.ShortName.ToString());
-        IEnumerable<String> LongNames = Attributes.Select(Attribute => Attribute.LongName);
-        List<String> Names = ShortNames.Union(LongNames).ToList();
-
-        for (int Index = 0; Index < arguments.Count; Index++)
-        {
-            String Argument = arguments[Index].Remove(0, 1);
-            if (Names.Contains(Argument.Split(settings.AssignmentCharacter)[0]))
-            {
-                var PropertyName = Properties.Where(p =>
-                {
-                    CommandLineOptionAttribute Att = p.GetCustomAttribute<CommandLineOptionAttribute>();
-                    bool Check = Att.ShortName.ToString() == Argument.Split(settings.AssignmentCharacter)[0] || Att.LongName == Argument.Split(settings.AssignmentCharacter)[0];
-                    return Check;
-                }).Select(p => p.Name);
-
-                PropertyInfo Info = ParsedObjectType.GetProperty(PropertyName.Single());
-
-
-                if (Info != null && Info.CanWrite)
-                {
-                    if (Info.PropertyType == typeof(Boolean))
-                    {
-                        Info.SetValue(ParsedObject, true);
-                        continue;
-                    }
-
-                    if (Info.PropertyType == typeof(String))
-                    {
-                        Info.SetValue(ParsedObject, Argument.Split(settings.AssignmentCharacter)[1]);
-                        continue;
-                    }
-                }
-            }
-        }
-        
-        
-        action.Invoke(ParsedObject);
+        return (Key, Value);
     }
 
+    public void AddOption(CommandLineOption Option)
+    {
+        Options.Add(Option);
+    }
+    
+    public void AddOptions(Collection<CommandLineOption> InOptions)
+    {
+        Options = InOptions;
+    }
+
+    public void Parse()
+    {
+        foreach (string Argument in Arguments)
+        {
+            // Throw if argument isn't valid
+            if (!IsArgumentValid(Argument)) throw new InvalidCommandLineArgumentException($"Argument \"{Argument}\" is not valid.");
+            
+            (string, object) SplittedArgument = SplitArgument(Argument);
+            CommandLineOption Option = Options.Single(O => O.ShortName == SplittedArgument.Item1[0] || O.LongName == SplittedArgument.Item1);
+            if (ParsedArguments.ContainsKey(Option) && !Option.AllowMultiple)
+                throw new InvalidCommandLineArgumentException($"Cannot use argument \"{Argument}\" multiple times.");
+
+            if(!ParsedArguments.ContainsKey(Option))
+                ParsedArguments[Option] = new List<object>();
+            ParsedArguments[Option].Add(SplittedArgument.Item2);
+        }
+    }
+    
+    
 }
