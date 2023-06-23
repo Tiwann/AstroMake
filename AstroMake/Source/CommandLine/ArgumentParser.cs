@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace AstroMake;
 
@@ -11,7 +13,7 @@ public class ArgumentParser
     public ArgumentParserSettings Settings { get; }
 
 
-    private Dictionary<CommandLineOption, List<object>> ParsedArguments;
+    private readonly Dictionary<CommandLineOption, List<object>> ParsedArguments;
     private Collection<CommandLineOption> Options = new();
     private readonly IEnumerable<char> PrefixCharacters;
 
@@ -23,7 +25,7 @@ public class ArgumentParser
         PrefixCharacters = Settings.ShortFormatPrefix.ToCharArray().Union(Settings.LongFormatPrefix.ToCharArray());
     }
     
-    public bool IsArgumentValid(string Argument)
+    private bool IsArgumentValid(string Argument)
     {
         var ShortNames = Options.Select(O => O.ShortName);
         var LongNames = Options.Select(O => O.LongName);
@@ -67,15 +69,25 @@ public class ArgumentParser
     {
         Options = InOptions;
     }
+    
+    public void AddOptions(params CommandLineOption[] InOptions)
+    {
+        Options = new Collection<CommandLineOption>(InOptions);
+    }
 
     public void Parse()
     {
+        if (Arguments.Count() == 0)
+            throw new NoArgumentProvidedException($"No arguments were provided. Try {Assembly.GetExecutingAssembly().GetName().Name} {Settings.LongFormatPrefix}help.");
+        //TODO: Check if any required options was not found
+
         foreach (string Argument in Arguments)
         {
             // Throw if argument isn't valid
             if (!IsArgumentValid(Argument)) throw new InvalidCommandLineArgumentException($"Argument \"{Argument}\" is not valid.");
             
             (string, object) SplittedArgument = SplitArgument(Argument);
+            // TODO: Try to patch this line which makes --h acceptable for help -h --help
             CommandLineOption Option = Options.Single(O => O.ShortName == SplittedArgument.Item1[0] || O.LongName == SplittedArgument.Item1);
             if (ParsedArguments.ContainsKey(Option) && !Option.AllowMultiple)
                 throw new InvalidCommandLineArgumentException($"Cannot use argument \"{Argument}\" multiple times.");
@@ -85,6 +97,50 @@ public class ArgumentParser
             ParsedArguments[Option].Add(SplittedArgument.Item2);
         }
     }
+
+    public string GetHelpText()
+    {
+        StringBuilder Builder = new();
+        Builder.AppendLine($"Usage: {Assembly.GetExecutingAssembly().GetName().Name} [options]");
+        Builder.AppendLine("options:");
+        foreach (CommandLineOption Option in Options)
+        {
+            string values = Option.PossibleValues != null ? $"[{Option.PossibleValues.Name}]" : string.Empty;
+            string tabs = string.IsNullOrEmpty(values) ? "\t\t" : "\t";
+            Builder.AppendLine($"    {Settings.ShortFormatPrefix}{Option.ShortName} {Settings.LongFormatPrefix}{Option.LongName} {values}{tabs}{Option.HelpText}");
+        }
+
+        foreach (CommandLineOption Option in Options)
+        {
+            if (Option.PossibleValues == null) continue;
+            Builder.AppendLine($"{Option.PossibleValues.Name}:");
+            foreach (CommandLineOptionPossibleValue PossibleValue in Option.PossibleValues.PossibleValues)
+            {
+                Builder.AppendLine($"    {PossibleValue.Name}\t{PossibleValue.HelpText}");
+            }
+        }
+        return Builder.ToString();
+    }
     
-    
+    public bool GetBool(CommandLineOption Option)
+    {
+        if (ParsedArguments.ContainsKey(Option))
+        {
+            var Value = ParsedArguments[Option][0];
+            if (Value is bool BVal) return BVal;
+            if (Value is string SVal) return SVal.ToBool();
+        }
+        return false;
+    }
+
+    public string GetString(CommandLineOption Option)
+    {
+        if (ParsedArguments.ContainsKey(Option))
+        {
+            var Value = ParsedArguments[Option][0];
+            if (Value is bool BVal) return BVal.ToString();
+            if (Value is string SVal) return SVal;
+        }
+        return string.Empty;
+    }
 }

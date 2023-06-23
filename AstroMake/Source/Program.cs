@@ -4,19 +4,31 @@ using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
 
 namespace AstroMake;
 
+public static class Options
+{
+    public static readonly CommandLineOption Help = new('h', "help", false, false, "Show help");
+    public static readonly CommandLineOption Build = new('b', "build", true, false, "Generate using Astro Make build scripts",
+            new("targets",
+                new("vstudio",  "Generate Visual Studio Solution (latest version)"),
+                new("makefile", "Generate Makefiles"),
+                new("xcode",    "Generate XCode Project")));
+    
+    public static readonly CommandLineOption RootDir = new('d', "dir", false, false, "Specify a build script search root directory");
+    public static readonly CommandLineOption Source = new('s', "source", false, true, "Add specific build script to the build queue");
+}
+
 
 internal static class Program
 {
-    public static String ScriptSearchRootDirectory = Directory.GetCurrentDirectory();
+    public static string ScriptSearchRootDirectory = Directory.GetCurrentDirectory();
     
-    private static void Main(String[] Arguments)
+    private static void Main(string[] Arguments)
     {
         // Hello Asro Make
         Log.Trace($"Astro Make {Version.AstroVersion}");
@@ -25,42 +37,44 @@ internal static class Program
 
         //Setting up the parser
         ArgumentParser Parser = new(Arguments, ArgumentParserSettings.WindowsStyle);
-        Parser.AddOptions(new Collection<CommandLineOption>
-        {
-            new(ShortName: 'h', LongName: "help",   Required: false, AllowMultiple: false),
-            new(ShortName: 'b', LongName: "build",  Required: true,  AllowMultiple: false),
-            new(ShortName: 's', LongName: "source", Required: false, AllowMultiple: true),
-        });
+        Parser.AddOptions(Options.Help, Options.Source, Options.Build, Options.RootDir);
         
         // Parser the arguments
         try
         {
             Parser.Parse();
+            if (Parser.GetBool(Options.Help))
+            {
+                Log.Trace(Parser.GetHelpText());
+            }
+
+            var a = Parser.GetString(Options.Source);
+
         }
         catch (InvalidCommandLineArgumentException Exception)
         {
-            Log.Error($"{Exception.Message}");
-            ShowHelp();
+            Log.Error(Exception.Message);
+            Log.Trace(Parser.GetHelpText());
+            Environment.Exit(0);
+        }
+        catch (ArgumentException Exception)
+        {
+            Log.Error(Exception.Message);
+            Environment.Exit(0);
+        }
+        catch (NoArgumentProvidedException Exception)
+        {
+            Log.Error(Exception.Message);
+            Environment.Exit(0);
         }
     }
     
-    private static void ShowHelp()
-    {
-        Log.Trace("Usage: AstroMake [options]");
-        Log.Trace("options:");
-        Log.Trace("    /h, /help                       Show help");
-        Log.Trace("    /b, /build [target]             Generate using AstroMake scripts");
-        Log.Trace("targets:");
-        Log.Trace("    vstudio     Generate Visual Studio Solution (latest version)");
-        Log.Trace("    makefile    Generate Makefiles");
-        Log.Trace("    xcode       Generate XCode Project");
-    }
-
+    //TODO: Rewrite this Generate method, should write a BuildQueue class that set up things to write vcxproj and sln files
     private static void Generate()
     {
-        String CurrentDirectory = ScriptSearchRootDirectory;
+        string CurrentDirectory = ScriptSearchRootDirectory;
         Log.Trace($"Current Working Directory: {CurrentDirectory}");
-        List<String> BuildFilepaths = Directory.EnumerateFiles(CurrentDirectory, "*.Astro.cs", SearchOption.AllDirectories).ToList();
+        List<string> BuildFilepaths = Directory.EnumerateFiles(CurrentDirectory, "*.Astro.cs", SearchOption.AllDirectories).ToList();
         if (BuildFilepaths.Count <= 0)
         {
             Log.Error("No build scripts found!");
@@ -76,14 +90,13 @@ internal static class Program
         Log.Trace("Compiling scripts...");
         Stopwatch Stopwatch = new();
         Stopwatch.Start();
-        using CSharpCodeProvider CodeProvider = new CSharpCodeProvider();
-        CompilerParameters Parameters = new CompilerParameters
+        using CSharpCodeProvider CodeProvider = new();
+        CompilerParameters Parameters = new()
         {
             GenerateInMemory = true,
             GenerateExecutable = false,
             IncludeDebugInformation = true,
             ReferencedAssemblies = { Assembly.GetExecutingAssembly().Location },
-            
         };
         
         CompilerResults CompileResults = CodeProvider.CompileAssemblyFromFile(Parameters, BuildFilepaths.ToArray());
@@ -130,14 +143,12 @@ internal static class Program
         
         foreach (var App in Applications)
         {
-            String Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCXXProject}");
+            string Filepath = Path.Combine(CurrentDirectory, $"test{Extensions.VisualCXXProject}");
             using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             using VcxprojWriter Writer = new(Stream);     
             Writer.Write(Solution, App);
             Log.Success($"Generated {Filepath}!");
         }
-        
-        
         
         Log.Success($"Visual Studio Solution Generation sucessful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s");
     }
