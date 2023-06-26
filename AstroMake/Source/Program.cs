@@ -7,27 +7,11 @@ using System.CodeDom.Compiler;
 using System.Diagnostics;
 using System.Linq;
 
-
 namespace AstroMake;
-
-public static class Options
-{
-    public static readonly CommandLineOption Help = new('h', "help", false, false, "Show help");
-    public static readonly CommandLineOption Build = new('b', "build", true, false, "Generate using Astro Make build scripts",
-            new("targets",
-                new("vstudio",  "Generate Visual Studio Solution (latest version)"),
-                new("makefile", "Generate Makefiles"),
-                new("xcode",    "Generate XCode Project")));
-    
-    public static readonly CommandLineOption RootDir = new('d', "dir", false, false, "Specify a build script search root directory");
-    public static readonly CommandLineOption Source = new('s', "source", false, true, "Add specific build script to the build queue");
-}
 
 
 internal static class Program
 {
-    public static string ScriptSearchRootDirectory = Directory.GetCurrentDirectory();
-    
     private static void Main(string[] Arguments)
     {
         // Hello Asro Make
@@ -35,21 +19,14 @@ internal static class Program
         Log.Trace("Copyright (C) 2023 Erwann Messoah");
         Log.Trace("Using dotnet framework 4.8.1\n");
 
-        //Setting up the parser
+        // Setting up the parser
         ArgumentParser Parser = new(Arguments, ArgumentParserSettings.WindowsStyle);
-        Parser.AddOptions(Options.Help, Options.Source, Options.Build, Options.RootDir);
+        Parser.AddOptions(Options.Help, Options.Source, Options.Build, Options.RootDir, Options.Test);
         
         // Parser the arguments
         try
         {
             Parser.Parse();
-            if (Parser.GetBool(Options.Help))
-            {
-                Log.Trace(Parser.GetHelpText());
-            }
-
-            var a = Parser.GetString(Options.Source);
-
         }
         catch (InvalidCommandLineArgumentException Exception)
         {
@@ -67,52 +44,42 @@ internal static class Program
             Log.Error(Exception.Message);
             Environment.Exit(0);
         }
+        
+        // Handle arguments
+        if (Parser.GetBool(Options.Help))
+        {
+            Log.Trace(Parser.GetHelpText());
+        }
+
+        // Get predefined sources
+        IEnumerable<string> Scripts = Parser.GetValues(Options.Source);
+
+        try
+        {
+            // Create build task
+            BuildTask Task = new(Parser.GetValue<string>(Options.Build));
+            if (Scripts is not null) Task.AddScripts(Scripts);
+            if (Parser.GetValue<bool>(Options.RootDir))
+            {
+                Task.RootDirectory = Parser.GetValue<string>(Options.RootDir);
+            }
+            Task.Compile();
+        }
+        catch (ScriptCompilationException Exception)
+        {
+            Log.Error(Exception.Message);
+        }
+
     }
     
-    //TODO: Rewrite this Generate method, should write a BuildQueue class that set up things to write vcxproj and sln files
-    private static void Generate()
+    // TODO: Rewrite this Generate method, should write a BuildQueue class that set up things to write vcxproj and sln files
+    /*private static void Generate()
     {
-        string CurrentDirectory = ScriptSearchRootDirectory;
+        string CurrentDirectory = null;
         Log.Trace($"Current Working Directory: {CurrentDirectory}");
-        List<string> BuildFilepaths = Directory.EnumerateFiles(CurrentDirectory, "*.Astro.cs", SearchOption.AllDirectories).ToList();
-        if (BuildFilepaths.Count <= 0)
-        {
-            Log.Error("No build scripts found!");
-            return;
-        }
         
-        Log.Trace($"Found {BuildFilepaths.Count} build script(s):");
-        foreach (var BuildFilepath in BuildFilepaths)
-        {
-            Log.Trace($"--> {BuildFilepath}");
-        }
         
-        Log.Trace("Compiling scripts...");
-        Stopwatch Stopwatch = new();
-        Stopwatch.Start();
-        using CSharpCodeProvider CodeProvider = new();
-        CompilerParameters Parameters = new()
-        {
-            GenerateInMemory = true,
-            GenerateExecutable = false,
-            IncludeDebugInformation = true,
-            ReferencedAssemblies = { Assembly.GetExecutingAssembly().Location },
-        };
         
-        CompilerResults CompileResults = CodeProvider.CompileAssemblyFromFile(Parameters, BuildFilepaths.ToArray());
-        
-        if (CompileResults.Errors.HasErrors)
-        {
-            foreach (CompilerError CompileError in CompileResults.Errors)
-            {
-                Log.Error($"{CompileError.ErrorText}.");
-                Log.Error($"File:{CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}");
-            }
-
-            return;
-        }
-        Stopwatch.Stop();
-        Log.Success($"Compilation successful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s.");
         
         
         
@@ -151,6 +118,6 @@ internal static class Program
         }
         
         Log.Success($"Visual Studio Solution Generation sucessful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s");
-    }
+    }*/
 }
 
