@@ -9,7 +9,7 @@ public class Application : WindowedApplication
 	{
 		Name = "Application";
 		Language = Language.CPlusPlus;
-		Flags = ApplicationFlags.MultiProcessorCompile;
+		Flags = ProjectFlags.MultiProcessorCompile;
 		TargetDirectory = Path.Combine(Solution.TargetDirectory, Name);
 		
 		Files.AddRange(new []
