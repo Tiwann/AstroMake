@@ -20,7 +20,7 @@ public enum BuildTaskType
 public class BuildTask
 {
     private readonly BuildTaskType BuildType;
-    private readonly List<string> BuildScripts = new();
+    public List<string> BuildScripts { get; } = new();
     public string RootDirectory { get; set; } = Directory.GetCurrentDirectory();
     private CompilerResults CompilerResults;
 
@@ -109,7 +109,7 @@ public class BuildTask
             foreach (CompilerError CompileError in CompilerResults.Errors)
             {
                 Builder.AppendLine($"{CompileError.ErrorText}.");
-                Builder.AppendLine($"File:{CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}");
+                Builder.AppendLine($"File: {CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}");
             }
             throw new ScriptCompilationFailedException(Builder.ToString());
         }
@@ -120,19 +120,6 @@ public class BuildTask
 
     public void Build()
     {
-        switch (BuildType)
-        {
-            case BuildTaskType.VisualStudioSolution:
-                Log.Trace("> Generating Visual Studio Solution...");
-                break;
-            case BuildTaskType.Makefiles:
-                Log.Trace("> Generating Makefiles...");
-                break;
-            case BuildTaskType.XCodeProject:
-                Log.Trace("> Generating XCode Project...");
-                break;
-        }
-        
         Assembly CompiledAssembly = CompilerResults.CompiledAssembly;
 
         Type SolutionType = CompiledAssembly.GetTypes().Single(Type => 
@@ -143,30 +130,31 @@ public class BuildTask
 
         
         IEnumerable<Type> ApplicationsTypes = CompiledAssembly.GetTypes().Where(Type =>
-            Type.IsSubclassOf<Application>() &&
+            Type.IsSubclassOf<Project>() &&
             Type.GetCustomAttribute<BuildAttribute>() != null);
         
-        List<Application> Applications = new List<Application>();
+        List<Project> Projects = new List<Project>();
         
         foreach (Type Type in ApplicationsTypes)
         {
-            Application ApplicationInstance = Type.CreateInstance<Application>(Solution);
-            if (Solution.Applications.Contains(ApplicationInstance.Name))
+            Project ProjectInstance = Type.CreateInstance<Project>(Solution);
+            if (Solution.ApplicationNames.Contains(ProjectInstance.Name))
             {
-                Applications.Add(ApplicationInstance);
+                Projects.Add(ProjectInstance);
+                Solution.Projects.Add(ProjectInstance);
             }
         }
 
         switch (BuildType)
         {
             case BuildTaskType.VisualStudioSolution:
-                BuildVisualStudioSolution(Solution, Applications);
+                BuildVisualStudioSolution(Solution, Projects);
                 break;
             case BuildTaskType.Makefiles:
-                BuildMakefiles(Solution, Applications);
+                BuildMakefiles(Solution, Projects);
                 break;
             case BuildTaskType.XCodeProject:
-                BuildXCodeProject(Solution, Applications);
+                BuildXCodeProject(Solution, Projects);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -174,27 +162,36 @@ public class BuildTask
         
     }
 
-    private void BuildVisualStudioSolution(Solution Solution, IEnumerable<Application> Applications)
+    private void BuildVisualStudioSolution(Solution Solution, IEnumerable<Project> Projects)
     {
+        Log.Trace("> Generating Visual Studio Solution...");
         Stopwatch Stopwatch = new Stopwatch();
         Stopwatch.Start();
 
-        List<string> GeneratedFiles = new List<string>();
         // Write vcxproj files
-        foreach (Application Application in Applications)
+        List<string> GeneratedFiles = new List<string>();
+        foreach (Project Project in Projects)
         {
-            if (!Directory.Exists(Application.TargetDirectory))
+            if (!Directory.Exists(Project.TargetDirectory))
             {
-                throw new DirectoryNotFoundException($"The target directory of application \"{Application.Name}\" was not found.");
+                throw new DirectoryNotFoundException($"The target directory of application \"{Project.Name}\" was not found.");
             }
-
-            string Filepath = Path.ChangeExtension(Path.Combine(Solution.TargetDirectory, Application.Name, Application.Name), Extensions.VisualCXXProject);
+            
+            string Filepath = Path.ChangeExtension(Path.Combine(Solution.TargetDirectory, Project.Name, Project.Name), Extensions.VisualCXXProject);
             GeneratedFiles.Add(Filepath);
             using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
-            using VcxprojWriter Writer = new VcxprojWriter(Stream, Application);
+            using VcxprojWriter Writer = new VcxprojWriter(Stream, Project);
             Writer.Write();
             Log.Trace($"> Generated {Filepath}");
         }
+
+        // Write Sln file
+        string SlnFilepath = $"{Solution.TargetDirectory}\\{Solution.Name}{Extensions.VisualCXXSolution}";
+        GeneratedFiles.Add(SlnFilepath);
+        using FileStream SlnStream = new (SlnFilepath, FileMode.OpenOrCreate, FileAccess.Write);
+        using SlnWriter SlnWriter = new (this, SlnStream, Solution);
+        SlnWriter.Write();
+        Log.Trace($"> Generated {SlnFilepath}");
         
         Log.Trace("> Writing .AstroMake file...");
         CreateAstroMakeFile(GeneratedFiles);
@@ -203,12 +200,12 @@ public class BuildTask
         
     }
 
-    private void BuildMakefiles(Solution Solution, List<Application> Applications)
+    private void BuildMakefiles(Solution Solution, List<Project> Projects)
     {
         throw new NotImplementedException();
     }
 
-    private void BuildXCodeProject(Solution Solution, List<Application> Applications)
+    private void BuildXCodeProject(Solution Solution, List<Project> Projects)
     {
         throw new NotImplementedException();
     }
