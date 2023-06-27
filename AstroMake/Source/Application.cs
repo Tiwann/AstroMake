@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AstroMake;
 
@@ -12,12 +13,12 @@ public abstract class Application
     /// <summary>
     /// Reference to a <see cref="Solution"/>
     /// </summary>
-    protected Solution Solution;
+    public Solution Solution;
     
     /// <summary>
     /// Application name
     /// </summary>
-    protected string Name { get; set; }
+    public string Name { get; protected set; }
     
     /// <summary>
     /// Application target directory
@@ -28,7 +29,7 @@ public abstract class Application
     /// <summary>
     /// Application <see cref="OutputType"/>
     /// </summary>
-    protected OutputType Type { get; set; }
+    public OutputType Type { get; set; }
     
     
     /// <summary>
@@ -71,5 +72,6 @@ public abstract class Application
         Links = new();
         Flags = ApplicationFlags.None;
         this.Solution = Solution;
+        
     }
 }

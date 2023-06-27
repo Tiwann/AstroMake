@@ -11,21 +11,18 @@ public static class Options
     public static readonly CommandLineOption Build;
     public static readonly CommandLineOption RootDir;
     public static readonly CommandLineOption Source;
-    public static readonly CommandLineOption Test;
+    public static readonly CommandLineOption Clean;
 
     static Options()
     {
         Help = new CommandLineOption('h', "help", false, false, "Show help");
-        Build = new CommandLineOption('b', "build", true, false, "Generate using Astro Make build scripts",
+        Build = new CommandLineOption('b', "build", false, false, "Generate using Astro Make build scripts",
             new("targets",
             new("vstudio",  "Generate Visual Studio Solution (latest version)"),
             new("makefile", "Generate Makefiles"),
             new("xcode",    "Generate XCode Project")));
         RootDir = new CommandLineOption('d', "dir", false, false, "Specify a build script search root directory");
         Source = new CommandLineOption('s', "source", false, true, "Add specific build script to the build queue");
-        Test = new CommandLineOption('a', "arg", true, false, "Test option",
-            new("commands", 
-            new("cmd", "Option command"), 
-            new("pwrsh", "Option powershell")));
+        Clean = new CommandLineOption('c', "clean", false, false, "Clean all generated files");
     }
 }

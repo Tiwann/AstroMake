@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
@@ -32,7 +33,7 @@ public class ArgumentParser
         var ShortNames = Options.Select(O => O.ShortName);
         var LongNames = Options.Select(O => O.LongName);
         string OptionName = GetOptionNameFromArgument(Argument);
-        return Settings.Regex.IsMatch(Argument) && (ShortNames.Contains(OptionName[0]) || LongNames.Contains(OptionName));
+        return Settings.Regex.IsMatch(Argument) && ((ShortNames.Contains(OptionName[0]) && OptionName.Length <= 1) || LongNames.Contains(OptionName));
     }
 
     private string GetOptionNameFromArgument(string Argument)
@@ -72,33 +73,46 @@ public class ArgumentParser
         if (Arguments.Count() == 0)
             throw new NoArgumentProvidedException($"No arguments were provided. Try {Assembly.GetExecutingAssembly().GetName().Name} {Settings.LongFormatPrefix}help.");
         
-        bool AllRequiredOptionsFound = Arguments.Any(A =>
-        {
-            string OptionName = GetOptionNameFromArgument(A);
-            var ShortNames = Options.Where(O => O.Required).Select(O => O.ShortName);
-            var LongNames = Options.Where(O => O.Required).Select(O => O.LongName);
-            return (ShortNames.Contains(OptionName[0]) && OptionName.Length <= 1) || LongNames.Contains(OptionName);
-        });
-
-        if (!AllRequiredOptionsFound)
-        {
-            throw new InvalidCommandLineArgumentException("A required option was not found.");
-        }
-
         foreach (string Argument in Arguments)
         {
             // Throw if argument isn't valid
             if (!IsArgumentValid(Argument)) throw new InvalidCommandLineArgumentException($"Argument \"{Argument}\" is not valid.");
             
             (string, dynamic) SplittedArgument = SplitArgument(Argument);
-            // TODO: Try to patch this line which makes --h acceptable for help -h --help
-            CommandLineOption Option = Options.Single(O => O.ShortName == SplittedArgument.Item1[0] || O.LongName == SplittedArgument.Item1);
-            if (ParsedArguments.ContainsKey(Option) && !Option.AllowMultiple)
-                throw new InvalidCommandLineArgumentException($"Cannot use argument \"{Argument}\" multiple times.");
+            try
+            {
+                CommandLineOption Option = Options.Single(O =>
+                    (O.ShortName == SplittedArgument.Item1[0] && SplittedArgument.Item1.Length <= 1) ||
+                    O.LongName == SplittedArgument.Item1);
+                
+                if (ParsedArguments.ContainsKey(Option) && !Option.AllowMultiple)
+                    throw new InvalidCommandLineArgumentException($"Cannot use argument \"{Argument}\" multiple times.");
 
-            if(!ParsedArguments.ContainsKey(Option))
-                ParsedArguments[Option] = new List<dynamic>();
-            ParsedArguments[Option].Add(SplittedArgument.Item2);
+                if(!ParsedArguments.ContainsKey(Option))
+                    ParsedArguments[Option] = new List<dynamic>();
+                ParsedArguments[Option].Add(SplittedArgument.Item2);
+                
+            }
+            catch (InvalidOperationException)
+            {
+                throw new InvalidCommandLineArgumentException($"Argument \"{Argument}\" is not valid.");
+            }
+
+            
+        }
+        
+        bool AllRequiredOptionsFound = Arguments.Any(A =>
+        {
+            string OptionName = GetOptionNameFromArgument(A);
+            var ShortNames = Options.Where(O => O.Required).Select(O => O.ShortName);
+            var LongNames = Options.Where(O => O.Required).Select(O => O.LongName);
+            if (ShortNames.Count() == 0 && LongNames.Count() == 0) return true;
+            return (ShortNames.Contains(OptionName[0]) && OptionName.Length <= 1) || LongNames.Contains(OptionName);
+        });
+
+        if (!AllRequiredOptionsFound)
+        {
+            throw new InvalidCommandLineArgumentException("A required option was not found.");
         }
     }
 
@@ -162,13 +176,12 @@ public class ArgumentParser
 
     public IEnumerable<string> GetValues(CommandLineOption Option)
     {
-        IEnumerable<string> Result = new string[] { };
+        List<string> Result = new List<string>();
         if (ParsedArguments.ContainsKey(Option))
         {
-            ParsedArguments[Option].ForEach(S => Result.ToList().Add(S));
+            ParsedArguments[Option].ForEach(S => Result.Add(S));
             return Result;
         }
-
         return null;
     }
 }

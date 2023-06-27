@@ -2,9 +2,9 @@
 
 namespace AstroMake;
 
-public class ScriptCompilationException : Exception
+public class ScriptCompilationFailedException : Exception
 {
-    public ScriptCompilationException(string Message) : base(Message)
+    public ScriptCompilationFailedException(string Message) : base(Message)
     {
         
     }

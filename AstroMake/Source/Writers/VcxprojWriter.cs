@@ -5,64 +5,91 @@ using System.Xml;
 
 namespace AstroMake;
 
-public class VcxprojWriter : ApplicationWriter
+public class VcxprojWriter : IDisposable
 {
-
-    public VcxprojWriter(Stream Output) : base(Output)
+    private readonly XmlTextWriter Writer;
+    private readonly Application Application;
+    
+    public VcxprojWriter(Stream Output, Application Application)
     {
+        Writer = XmlStatics.CreateWriter(Output);
+        this.Application = Application;
     }
     
     private void WriteAttribute(string Name, string Value)
     {
-        writer.WriteStartAttribute(Name);
-        writer.WriteValue(Value);
-        writer.WriteEndAttribute();
+        Writer.WriteStartAttribute(Name);
+        Writer.WriteValue(Value);
+        Writer.WriteEndAttribute();
     }
 
-    public override void Write(Solution Solution, Application Application)
+    public void Write()
     {
         try
         {
-            writer.WriteStartDocument();
-            writer.WriteComment($"Astro Make {Version.AstroVersion} generated vcxproj");
-            writer.WriteComment("Astro Make (c) Erwann Messoah 2023");
-            writer.WriteComment("https://github.com/Tiwann/AstroMake");
+            Writer.WriteStartDocument();
+            Writer.WriteComment($"Astro Make {Version.AstroVersion} generated vcxproj");
+            Writer.WriteComment("Astro Make © Erwann Messoah 2023");
+            Writer.WriteComment("https://github.com/Tiwann/AstroMake");
 
-            writer.WriteStartElement("Project");
+            Writer.WriteStartElement("Project");
             WriteAttribute("DefaultTargets", "Build");
             WriteAttribute("xmlns", XmlStatics.XmlNamespace);
-                writer.WriteStartElement("ItemGroup");
+                Writer.WriteStartElement("ItemGroup");
                 WriteAttribute("Label", "ProjectConfigurations");
-                    foreach (Configuration Configuration in Solution.Configurations)
+                    foreach (Configuration Configuration in Application.Solution.Configurations)
                     {
-                        foreach (Architecture Architecture in Solution.Architectures)
+                        foreach (Architecture Architecture in Application.Solution.Architectures)
                         {
-                            foreach (string Platform in Solution.Platforms)
+                            if (Application.Solution.Platforms.Count > 0)
                             {
-                                string ConfigName = Solution.Platforms.Count == 0 ? $"{Configuration.Name}|{Architecture}" : $"{Configuration.Name} {Platform}|{Architecture}";
-                                writer.WriteStartElement("ProjectConfiguration");
+                                foreach (string Platform in Application.Solution.Platforms)
+                                {
+                                    string ConfigName = $"{Configuration.Name} {Platform}|{Architecture}";
+                                    Writer.WriteStartElement("ProjectConfiguration");
+                                    WriteAttribute("Include", ConfigName);
+                            
+                                    Writer.WriteStartElement("Configuration");
+                                    Writer.WriteString(ConfigName);
+                                    Writer.WriteEndElement();
+                            
+                                    Writer.WriteStartElement("Platform");
+                                    Writer.WriteString($"{Architecture}");
+                                    Writer.WriteEndElement();
+                            
+                                    Writer.WriteEndElement();
+                                }
+                            }
+                            else
+                            {
+                                string ConfigName = $"{Configuration.Name}|{Architecture}";
+                                Writer.WriteStartElement("ProjectConfiguration");
                                 WriteAttribute("Include", ConfigName);
                             
-                                writer.WriteStartElement("Configuration");
-                                writer.WriteString(ConfigName);
-                                writer.WriteEndElement();
+                                Writer.WriteStartElement("Configuration");
+                                Writer.WriteString(ConfigName);
+                                Writer.WriteEndElement();
                             
-                                writer.WriteStartElement("Platform");
-                                writer.WriteString($"{Architecture}");
-                                writer.WriteEndElement();
+                                Writer.WriteStartElement("Platform");
+                                Writer.WriteString($"{Architecture}");
+                                Writer.WriteEndElement();
                             
-                                writer.WriteEndElement();
+                                Writer.WriteEndElement();
                             }
-                            
                         }
                         
                     }
-                writer.WriteEndElement();
-            writer.WriteEndElement();
+                Writer.WriteEndElement();
+            Writer.WriteEndElement();
         }
-        catch (Exception e)
+        catch (Exception Exception)
         {
-            Log.Error($"Error while writing Vcxproj: {e.Message}");
+            Log.Error($"Error while writing Vcxproj: {Exception.Message}");
         }
+    }
+
+    public void Dispose()
+    {
+        Writer?.Dispose();
     }
 }

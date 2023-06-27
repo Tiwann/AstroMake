@@ -10,7 +10,7 @@ public class ArgumentParserSettings
     public readonly string LongFormatPrefix;
     public readonly char AssigmentCharacter;
 
-    public Regex Regex => new(@$"^({ShortFormatPrefix}|{LongFormatPrefix})[A-Za-z]+({AssigmentCharacter}[A-Za-z0-9:/\\]+)?$");
+    public Regex Regex => new(@$"^({ShortFormatPrefix}|{LongFormatPrefix})[A-Za-z]+({AssigmentCharacter}[A-Za-z0-9:/\\._]+)?$");
 
     public ArgumentParserSettings(string Short, string Long, char Assignment)
     {
