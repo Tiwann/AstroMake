@@ -10,7 +10,7 @@ public class GLFW : StaticLibrary
 	{
 		Name = "glfw";
 		Language = Language.C;
-		Flags = ApplicationFlags.MultiProcessorCompile;
+		Flags = ProjectFlags.MultiProcessorCompile;
 		TargetDirectory = Path.Combine(Solution.TargetDirectory, Name);
 		
 		Files.AddRange(new []

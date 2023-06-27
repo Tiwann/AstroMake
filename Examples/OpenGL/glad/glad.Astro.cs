@@ -9,7 +9,7 @@ public class GLAD : StaticLibrary
 	{
 		Name = "glad";
 		Language = Language.C;
-		Flags = ApplicationFlags.MultiProcessorCompile;
+		Flags = ProjectFlags.MultiProcessorCompile;
 		TargetDirectory = Path.Combine(Solution.TargetDirectory, Name);
 		
 		Files.AddRange(new []
