@@ -8,12 +8,12 @@ namespace AstroMake;
 public class VcxprojWriter : IDisposable
 {
     private readonly XmlTextWriter Writer;
-    private readonly Application Application;
+    private readonly Project Project;
     
-    public VcxprojWriter(Stream Output, Application Application)
+    public VcxprojWriter(Stream Output, Project Project)
     {
         Writer = XmlStatics.CreateWriter(Output);
-        this.Application = Application;
+        this.Project = Project;
     }
     
     private void WriteAttribute(string Name, string Value)
@@ -30,56 +30,54 @@ public class VcxprojWriter : IDisposable
             Writer.WriteStartDocument();
             Writer.WriteComment($"Astro Make {Version.AstroVersion} generated vcxproj");
             Writer.WriteComment("Astro Make © Erwann Messoah 2023");
-            Writer.WriteComment("https://github.com/Tiwann/AstroMake");
+            Writer.WriteComment("\"https://github.com/Tiwann/AstroMake\"");
 
             Writer.WriteStartElement("Project");
             WriteAttribute("DefaultTargets", "Build");
             WriteAttribute("xmlns", XmlStatics.XmlNamespace);
                 Writer.WriteStartElement("ItemGroup");
                 WriteAttribute("Label", "ProjectConfigurations");
-                    foreach (Configuration Configuration in Application.Solution.Configurations)
+                    foreach (Configuration Configuration in Project.Solution.Configurations)
                     {
-                        foreach (Architecture Architecture in Application.Solution.Architectures)
+                        if (Project.Solution.Platforms.Count > 0)
                         {
-                            if (Application.Solution.Platforms.Count > 0)
+                            foreach (string Platform in Project.Solution.Platforms)
                             {
-                                foreach (string Platform in Application.Solution.Platforms)
-                                {
-                                    string ConfigName = $"{Configuration.Name} {Platform}|{Architecture}";
-                                    Writer.WriteStartElement("ProjectConfiguration");
-                                    WriteAttribute("Include", ConfigName);
-                            
-                                    Writer.WriteStartElement("Configuration");
-                                    Writer.WriteString(ConfigName);
-                                    Writer.WriteEndElement();
-                            
-                                    Writer.WriteStartElement("Platform");
-                                    Writer.WriteString($"{Architecture}");
-                                    Writer.WriteEndElement();
-                            
-                                    Writer.WriteEndElement();
-                                }
-                            }
-                            else
-                            {
-                                string ConfigName = $"{Configuration.Name}|{Architecture}";
+                                string ConfigName = $"{Configuration.Name} {Platform}";
                                 Writer.WriteStartElement("ProjectConfiguration");
-                                WriteAttribute("Include", ConfigName);
+                                WriteAttribute("Include", $"{ConfigName}|{Project.Solution.Architecture}");
                             
                                 Writer.WriteStartElement("Configuration");
                                 Writer.WriteString(ConfigName);
                                 Writer.WriteEndElement();
                             
                                 Writer.WriteStartElement("Platform");
-                                Writer.WriteString($"{Architecture}");
+                                Writer.WriteString($"{Project.Solution.Architecture}");
                                 Writer.WriteEndElement();
                             
                                 Writer.WriteEndElement();
                             }
                         }
-                        
+                        else
+                        {
+                            string ConfigName = $"{Configuration.Name}";
+                            Writer.WriteStartElement("ProjectConfiguration");
+                            WriteAttribute("Include", $"{ConfigName}|{Project.Solution.Architecture}");
+                            
+                            Writer.WriteStartElement("Configuration");
+                            Writer.WriteString(ConfigName);
+                            Writer.WriteEndElement();
+                            
+                            Writer.WriteStartElement("Platform");
+                            Writer.WriteString($"{Project.Solution.Architecture}");
+                            Writer.WriteEndElement();
+                            
+                            Writer.WriteEndElement();
+                        }
                     }
                 Writer.WriteEndElement();
+                
+                
             Writer.WriteEndElement();
         }
         catch (Exception Exception)

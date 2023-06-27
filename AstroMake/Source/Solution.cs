@@ -39,19 +39,21 @@ public abstract class Solution
     /// <summary>
     /// Architectures
     /// </summary>
-    public List<Architecture> Architectures;
+    public Architecture Architecture;
     
     /// <summary>
-    /// Applications linked to this solutions
+    /// Projects linked to this solutions
     /// </summary>
-    public List<string> Applications { get; set; }
+    public List<string> ApplicationNames { get; set; }
+
+    public List<Project> Projects { get; set; } = new List<Project>();
 
     protected Solution()
     {
         Configurations = new();
         Systems = new();
-        Architectures = new();
-        Applications = new();
+        Architecture = new();
+        ApplicationNames = new();
         Platforms = new();
         TargetDirectory = Directory.GetCurrentDirectory();
     }
