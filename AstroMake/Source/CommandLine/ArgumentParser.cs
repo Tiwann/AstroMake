@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace AstroMake;
 
@@ -104,9 +105,9 @@ public class ArgumentParser
         bool AllRequiredOptionsFound = Arguments.Any(A =>
         {
             string OptionName = GetOptionNameFromArgument(A);
-            var ShortNames = Options.Where(O => O.Required).Select(O => O.ShortName);
-            var LongNames = Options.Where(O => O.Required).Select(O => O.LongName);
-            if (ShortNames.Count() == 0 && LongNames.Count() == 0) return true;
+            var ShortNames = Options.Where(O => O.Required).Select(O => O.ShortName).ToList();
+            var LongNames = Options.Where(O => O.Required).Select(O => O.LongName).ToList();
+            if (ShortNames.Count == 0 && LongNames.Count == 0) return true;
             return (ShortNames.Contains(OptionName[0]) && OptionName.Length <= 1) || LongNames.Contains(OptionName);
         });
 
@@ -165,10 +166,18 @@ public class ArgumentParser
 
     public dynamic GetValue<T>(CommandLineOption Option)
     {
-        if (ParsedArguments.ContainsKey(Option))
+        try
         {
-            T Value = ParsedArguments[Option][0];
-            return Value;
+            if (ParsedArguments.ContainsKey(Option))
+            {
+                T Value = ParsedArguments[Option][0];
+                return Value;
+            }
+        }
+        catch (RuntimeBinderException)
+        {
+            Log.Error($"Option \"{Option.LongName}\" is not being used well. Try {Assembly.GetExecutingAssembly().GetName().Name} {Settings.LongFormatPrefix}{AstroMake.Options.Help.LongName} to show help");
+            Environment.Exit(0);
         }
 
         return false;
