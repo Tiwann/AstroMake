@@ -1,4 +1,4 @@
-# <img src="/Resources/AstroMakeLogo.png" width="32" height="32">  Astro Make
+# <img src="/Resources/AstroMakeLogo.png" width="48" height="48">  Astro Make
 
 ## Introduction
 Astro Make is a simple and fast build tool that generates
