@@ -42,12 +42,13 @@ internal static class Program
             Environment.Exit(0);
         }
         
-        // Handle arguments
+        // Handle help
         if (Parser.GetBool(Options.Help))
         {
             Log.Trace(Parser.GetHelpText());
         }
 
+        // Handle clean
         if (Parser.GetValue<bool>(Options.Clean))
         {
             Log.Trace("> Cleaning all generated files...");
@@ -70,6 +71,8 @@ internal static class Program
             Environment.Exit(0);
         }
         
+        
+        // Handle build
         try
         {
             // Create build task
