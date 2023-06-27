@@ -1,4 +1,4 @@
-# <img src="/Resources/AstroMakeLogo.png" width="32" height="32">  Astro Make
+# <img src="/Resources/AstroMakeLogo.png" width="48" height="48" class="astro-logo" style=".astro-logo { text-align: justify; }"> Astro Make
 
 ## Introduction
 Astro Make is a simple and fast build tool that generates
@@ -14,9 +14,7 @@ When running Astro Make program, it recursively look for `.Astro.cs` files that 
 into an assembly in runtime.
 The compiler gives error messages so the users know if their code have mistakes.
 
-## How to use
-
-
+## How to uses
 
 
 
