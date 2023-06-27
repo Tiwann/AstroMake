@@ -3,9 +3,8 @@
 namespace AstroMake;
 
 [Flags]
-public enum ApplicationFlags
+public enum ProjectFlags
 {
     None = 0,
     MultiProcessorCompile = 1 << 0,
-    
 }

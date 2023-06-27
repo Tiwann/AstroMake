@@ -8,7 +8,7 @@ namespace AstroMake;
 /// <summary>
 /// Describes an Application/Project
 /// </summary>
-public abstract class Application 
+public abstract class Project 
 {
     /// <summary>
     /// Reference to a <see cref="Solution"/>
@@ -16,32 +16,32 @@ public abstract class Application
     public Solution Solution;
     
     /// <summary>
-    /// Application name
+    /// Project name
     /// </summary>
     public string Name { get; protected set; }
     
     /// <summary>
-    /// Application target directory
+    /// Project target directory
     /// </summary>
     public string TargetDirectory { get; protected set; }
     
     
     /// <summary>
-    /// Application <see cref="OutputType"/>
+    /// Project <see cref="OutputType"/>
     /// </summary>
     public OutputType Type { get; set; }
     
     
     /// <summary>
-    /// Application <see cref="Language"/>
+    /// Project <see cref="Language"/>
     /// </summary>
     public Language Language { get; protected set; }
     
     
     /// <summary>
-    /// <see cref="ApplicationFlags"/>
+    /// <see cref="ProjectFlags"/>
     /// </summary>
-    protected ApplicationFlags Flags { get; set; }
+    protected ProjectFlags Flags { get; set; }
 
     /// <summary>
     /// List of files to include. Entries could be absolute filepaths, relative filepaths, or wildcards
@@ -59,18 +59,19 @@ public abstract class Application
     protected List<string> Defines { get; set; }
     
     /// <summary>
-    /// List of Applications to link against. Should be application's name
+    /// List of Projects to link against. Should be application's name
     /// </summary>
     public List<string> Links { get; protected set; }
-
-
-    protected Application(Solution Solution)
+    
+    public Guid GUID => Guid.NewGuid();
+    
+    protected Project(Solution Solution)
     {
         Files = new();
         IncludeDirectories = new();
         Defines = new();
         Links = new();
-        Flags = ApplicationFlags.None;
+        Flags = ProjectFlags.None;
         this.Solution = Solution;
         
     }
