@@ -148,7 +148,7 @@ public class ArgumentParser
         {
             var Value = ParsedArguments[Option][0];
             if (Value is bool BVal) return BVal;
-            if (Value is string SVal) return SVal.ToBool();
+            if (Value is string SVal) return !string.IsNullOrEmpty(SVal);
         }
         return false;
     }

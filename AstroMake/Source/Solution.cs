@@ -1,60 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 
 namespace AstroMake;
 
-
 /// <summary>
 /// Describes a solution/workspace
 /// </summary>
-public abstract class Solution 
+public abstract class Solution
 {
-    /// <summary>
-    /// Solution name
-    /// </summary>
-    public string Name;
-    
-    /// <summary>
-    /// Solution's target directory
-    /// </summary>
-    public string TargetDirectory;
-    
-    /// <summary>
-    /// Configurations
-    /// </summary>
+    public string Name { get; set; }
+    public string TargetDirectory { get; protected set; }
+    public string Location { get; protected set; } = Directory.GetCurrentDirectory();
     public List<Configuration> Configurations { get; protected set; }
-    
-    /// <summary>
-    /// Platforms.
-    /// </summary>
-    public List<string> Platforms { get; protected set; }
-    
-    /// <summary>
-    /// Systems.
-    /// </summary>
+    public List<string> Platforms { get; set; }
     public List<System> Systems { get; protected set; }
-    
-    /// <summary>
-    /// Architectures
-    /// </summary>
-    public Architecture Architecture;
-    
-    /// <summary>
-    /// Projects linked to this solutions
-    /// </summary>
-    public List<string> ApplicationNames { get; set; }
+    public Architecture Architecture { get; protected set; } = Architecture.x64;
+    public List<string> ProjectNames { get; protected set; }
+    public List<Project> Projects { get; protected set; }
 
-    public List<Project> Projects { get; set; } = new List<Project>();
-
+    public string AstroMakeFilePath => Path.Combine(Location, "astromake");
+    
     protected Solution()
     {
-        Configurations = new();
-        Systems = new();
-        Architecture = new();
-        ApplicationNames = new();
-        Platforms = new();
         TargetDirectory = Directory.GetCurrentDirectory();
+        Configurations = new List<Configuration>();
+        Platforms = new List<string>();
+        Systems = new List<System>();
+        ProjectNames = new List<string>();
+        Projects = new List<Project>();
     }
 }

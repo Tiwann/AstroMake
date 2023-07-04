@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 
 public enum Architecture

@@ -20,7 +20,7 @@ public enum BuildTaskType
 public class BuildTask
 {
     private readonly BuildTaskType BuildType;
-    public List<string> BuildScripts { get; } = new();
+    private readonly List<string> BuildScripts = new();
     public string RootDirectory { get; set; } = Directory.GetCurrentDirectory();
     private CompilerResults CompilerResults;
 
@@ -53,10 +53,7 @@ public class BuildTask
         
         BuildScripts.AddRange(FoundBuildScripts);
         Log.Trace($"Found {FoundBuildScripts.Count} build script(s):");
-        foreach (var BuildFilepath in FoundBuildScripts)
-        {
-            Log.Trace($"--> {BuildFilepath}");
-        }
+        FoundBuildScripts.ForEach(B => Log.Trace($"--> {B}"));
     }
 
     public void AddScript(string Script)
@@ -109,10 +106,11 @@ public class BuildTask
             foreach (CompilerError CompileError in CompilerResults.Errors)
             {
                 Builder.AppendLine($"{CompileError.ErrorText}.");
-                Builder.AppendLine($"File: {CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}");
+                Builder.AppendLine($"File: {CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}.");
             }
             throw new ScriptCompilationFailedException(Builder.ToString());
         }
+        
         
         Stopwatch.Stop();
         Log.Success($"> Compilation successful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s.");
@@ -122,39 +120,128 @@ public class BuildTask
     {
         Assembly CompiledAssembly = CompilerResults.CompiledAssembly;
 
-        Type SolutionType = CompiledAssembly.GetTypes().Single(Type => 
+        
+        Type SolutionType = CompiledAssembly.GetTypes().Single(Type =>
             Type.IsSubclassOf<Solution>() &&
-            Type.GetCustomAttribute<BuildAttribute>() != null);
-        
-        Solution Solution = Activator.CreateInstance(SolutionType) as Solution;
+            Type.GetCustomAttribute<BuildAttribute>() is not null);
 
+        Solution Solution = SolutionType.CreateInstance<Solution>();
+        if (Solution is null)
+        {
+            throw new BuildFailedException("Failed to instantiate Solution!");
+        }
+
+        if (string.IsNullOrEmpty(Solution.Name))
+        {
+            throw new BuildFailedException($"Solution \"{Solution.GetType().Name}\" needs a name.");
+        }
         
-        IEnumerable<Type> ApplicationsTypes = CompiledAssembly.GetTypes().Where(Type =>
+        if (Solution.Name.Contains(' '))
+        {
+            string NewName = Solution.Name.Replace(' ', '_');
+            Log.Warning($"> Solution \"{Solution.Name}\" was renamed to \"{NewName}\".");
+            Solution.Name = NewName;
+        }
+        
+        Solution.Configurations.ForEach(Conf =>
+        {
+            if (Conf.Name.Contains(' '))
+            {
+                string NewName = Conf.Name.Replace(' ', '_');
+                Log.Warning($"Project \"{Solution.Name}\" was renamed to \"{NewName}\".");
+                Conf.Name = NewName;
+            }
+        });
+        
+        if (string.IsNullOrEmpty(Solution.TargetDirectory))
+        {
+            throw new BuildFailedException($"Please specify a target directory for solution \"{Solution.Name}\"");
+        }
+        
+        if (Solution.Configurations.IsEmpty())
+        {
+            throw new BuildFailedException($"Solution \"{Solution.GetType().Name}\" needs a set of configurations.");
+        }
+
+        if (!Solution.Systems.IsEmpty())
+        {
+            var NewPlatforms = new List<string>();
+            Solution.Systems.ForEach(Sys =>
+            {
+                if (!Solution.Platforms.IsEmpty())
+                {
+                    Solution.Platforms.ForEach(Platform =>
+                    {
+                        NewPlatforms.Add($"{Platform}{Sys.ToString()}");
+                    });
+                }
+                else
+                {
+                    NewPlatforms.Add(Sys.ToString());
+                }
+            });
+            Solution.Platforms = NewPlatforms;
+        }
+        
+        
+        List<Type> ProjectTypes = CompiledAssembly.GetTypes().Where(Type =>
             Type.IsSubclassOf<Project>() &&
-            Type.GetCustomAttribute<BuildAttribute>() != null);
+            Type.GetCustomAttribute<BuildAttribute>() != null).ToList();
+
+        if (ProjectTypes.IsEmpty()) throw new BuildFailedException("No Projects found!");
         
-        List<Project> Projects = new List<Project>();
-        
-        foreach (Type Type in ApplicationsTypes)
+        foreach (Type Type in ProjectTypes)
         {
             Project ProjectInstance = Type.CreateInstance<Project>(Solution);
-            if (Solution.ApplicationNames.Contains(ProjectInstance.Name))
+            if (Solution.ProjectNames.Contains(ProjectInstance.Name))
             {
-                Projects.Add(ProjectInstance);
                 Solution.Projects.Add(ProjectInstance);
             }
         }
+        
+        Solution.Projects.ForEach(Project =>
+        {
+            if (string.IsNullOrEmpty(Project.Name))
+            {
+                throw new BuildFailedException($"Project \"{Project.GetType().Name}\" needs a name.");
+            }
+
+            if (Project.Name.Contains(' '))
+            {
+                string NewName = Project.Name.Replace(' ', '_');
+                Log.Warning($"Project \"{Project.Name}\" was renamed to \"{NewName}\".");
+                Project.Name = NewName;
+            }
+            
+            if (string.IsNullOrEmpty(Project.TargetDirectory))
+            {
+                throw new BuildFailedException($"Please specify a target directory for project \"{Project.Name}\".");
+            }
+            
+            if (string.IsNullOrEmpty(Project.Location))
+            {
+                throw new BuildFailedException($"Please specify a location for project \"{Project.Name}\".");
+            }
+
+            if (Project.Language.IsC() && !Project.Dialect.IsCPP())
+            {
+                Log.Warning($"> Project \"{Project.Name}\": Dialect \"{Project.Dialect.GetString()}\" does not match with language \"{Project.Language.GetString()}\".");
+                Project.Dialect = Project.Language.IsC() ? Dialect.CPPLatest : Dialect.CSharpLatest;
+                Log.Warning($"> Dialec is now set to {Project.Dialect.GetString()}");
+                
+            }
+        });
 
         switch (BuildType)
         {
             case BuildTaskType.VisualStudioSolution:
-                BuildVisualStudioSolution(Solution, Projects);
+                BuildVisualStudioSolution(Solution);
                 break;
             case BuildTaskType.Makefiles:
-                BuildMakefiles(Solution, Projects);
+                BuildMakefiles(Solution);
                 break;
             case BuildTaskType.XCodeProject:
-                BuildXCodeProject(Solution, Projects);
+                BuildXCodeProject(Solution);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -162,58 +249,59 @@ public class BuildTask
         
     }
 
-    private void BuildVisualStudioSolution(Solution Solution, IEnumerable<Project> Projects)
+    private void BuildVisualStudioSolution(Solution Solution)
     {
         Log.Trace("> Generating Visual Studio Solution...");
-        Stopwatch Stopwatch = new Stopwatch();
+        Stopwatch Stopwatch = new();
         Stopwatch.Start();
 
         // Write vcxproj files
         List<string> GeneratedFiles = new List<string>();
-        foreach (Project Project in Projects)
+        foreach (Project Project in Solution.Projects)
         {
             if (!Directory.Exists(Project.TargetDirectory))
             {
                 throw new DirectoryNotFoundException($"The target directory of application \"{Project.Name}\" was not found.");
             }
             
-            string Filepath = Path.ChangeExtension(Path.Combine(Solution.TargetDirectory, Project.Name, Project.Name), Extensions.VisualCXXProject);
+            string Filepath = Path.ChangeExtension(Project.TargetPath, Extensions.VisualCXXProject);
             GeneratedFiles.Add(Filepath);
             using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
-            using VcxprojWriter Writer = new VcxprojWriter(Stream, Project);
+            using VcxprojWriter Writer = new(Stream, Project);
             Writer.Write();
             Log.Trace($"> Generated {Filepath}");
         }
 
         // Write Sln file
-        string SlnFilepath = $"{Solution.TargetDirectory}\\{Solution.Name}{Extensions.VisualCXXSolution}";
+        if (!Directory.Exists(Solution.TargetDirectory))
+            Directory.CreateDirectory(Solution.TargetDirectory);
+        string SlnFilepath = $"{Solution.TargetDirectory}\\{Solution.Name}{Extensions.VisualStudioSolution}";
         GeneratedFiles.Add(SlnFilepath);
         using FileStream SlnStream = new (SlnFilepath, FileMode.OpenOrCreate, FileAccess.Write);
         using SlnWriter SlnWriter = new (this, SlnStream, Solution);
         SlnWriter.Write();
         Log.Trace($"> Generated {SlnFilepath}");
-        
-        Log.Trace("> Writing .AstroMake file...");
-        CreateAstroMakeFile(GeneratedFiles);
+
+        Log.Trace($"> Writing {Solution.AstroMakeFilePath}...");
+        CreateAstroMakeFile(GeneratedFiles, Solution);
         Stopwatch.Stop();
         Log.Success($"> Visual Studio Solution generation successful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s");
-        
     }
 
-    private void BuildMakefiles(Solution Solution, List<Project> Projects)
+    private void BuildMakefiles(Solution Solution)
     {
         throw new NotImplementedException();
     }
 
-    private void BuildXCodeProject(Solution Solution, List<Project> Projects)
+    private void BuildXCodeProject(Solution Solution)
     {
         throw new NotImplementedException();
     }
 
-    private void CreateAstroMakeFile(IEnumerable<string> GeneratedFiles)
+    private void CreateAstroMakeFile(IEnumerable<string> GeneratedFiles, Solution Solution)
     {
-        string Filepath = $"{Directory.GetCurrentDirectory()}\\.AstroMake";
-        StringBuilder Builder = new StringBuilder();
+        string Filepath = Solution.AstroMakeFilePath;
+        StringBuilder Builder = new ();
         Builder.AppendLine($"# Astro Make {Version.AstroVersion}");
         Builder.AppendLine("# (C) Erwann Messoah 2023");
         Builder.AppendLine("# https://github.com/Tiwann/AstroMake\n");

@@ -1,78 +1,81 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace AstroMake;
-
 
 /// <summary>
 /// Describes an Application/Project
 /// </summary>
-public abstract class Project 
+public abstract class Project
 {
-    /// <summary>
-    /// Reference to a <see cref="Solution"/>
-    /// </summary>
-    public Solution Solution;
-    
-    /// <summary>
-    /// Project name
-    /// </summary>
-    public string Name { get; protected set; }
-    
-    /// <summary>
-    /// Project target directory
-    /// </summary>
+    public Solution Solution { get; set; }
+    public string Name { get; set; }
     public string TargetDirectory { get; protected set; }
-    
-    
-    /// <summary>
-    /// Project <see cref="OutputType"/>
-    /// </summary>
-    public OutputType Type { get; set; }
-    
-    
-    /// <summary>
-    /// Project <see cref="Language"/>
-    /// </summary>
-    public Language Language { get; protected set; }
-    
-    
-    /// <summary>
-    /// <see cref="ProjectFlags"/>
-    /// </summary>
-    protected ProjectFlags Flags { get; set; }
+    public string TargetName { get; protected set; } 
+    public string Location { get; protected set; }
+    public string BinariesDirectory { get; set; }
+    public string IntermediateDirectory { get; set; }
 
-    /// <summary>
-    /// List of files to include. Entries could be absolute filepaths, relative filepaths, or wildcards
-    /// </summary>
-    protected List<string> Files { get; set; }
+    private string Extension
+    {
+        get
+        {
+            switch (Language)
+            {
+                case Language.C:
+                case Language.CPlusPlus:
+                    return Extensions.VisualCXXProject;
+                case Language.CSharp:
+                    return Extensions.VisualCSharpProject;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+    }
+
     
-    /// <summary>
-    /// List of Include directories. Entries could be absolute paths, relative paths, or wildcards
-    /// </summary>
-    protected List<string> IncludeDirectories { get; set; }
-    
-    /// <summary>
-    /// List of preprocessor defines. 
-    /// </summary>
-    protected List<string> Defines { get; set; }
-    
-    /// <summary>
-    /// List of Projects to link against. Should be application's name
-    /// </summary>
+    public string TargetPath => Path.ChangeExtension(Path.Combine(TargetDirectory, TargetName), Extension);
+    public OutputType Type { get; protected set; }
+    public Language Language { get; protected set; }
+    public ProjectFlags Flags { get; protected set; }
+    public Dialect Dialect { get; set; }
+    public List<string> Files { get; protected set; }
+    public List<string> AdditionalFiles { get; protected set; }
+    public List<string> IncludeDirectories { get; protected set; }
+    public List<string> Defines { get; protected set; }
     public List<string> Links { get; protected set; }
-    
-    public Guid GUID => Guid.NewGuid();
-    
+    public Guid Guid { get; }
+
+    public Guid ProjectTypeGuid
+    {
+        get
+        {
+            switch (Language)
+            {
+                case Language.C:
+                case Language.CPlusPlus:
+                    return new Guid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942");
+                case Language.CSharp:
+                    return new Guid("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC");
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+    }
+
     protected Project(Solution Solution)
     {
         Files = new();
+        AdditionalFiles = new();
         IncludeDirectories = new();
         Defines = new();
         Links = new();
         Flags = ProjectFlags.None;
         this.Solution = Solution;
-        
+        Guid = Guid.NewGuid();
+        BinariesDirectory = Path.Combine(Solution.Location, "Binaries");
+        IntermediateDirectory = Path.Combine(Solution.Location, "Intermediate");
     }
 }

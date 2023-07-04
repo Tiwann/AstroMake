@@ -16,7 +16,7 @@ public struct SlnWriterSettings
         this.IndentationSize = IndentationSize;
     }
 
-    public static readonly SlnWriterSettings Default = new ('\t', 1);
+    public static readonly SlnWriterSettings Default = new('\t', 1);
 }
 
 public class SlnWriter : IDisposable
@@ -38,7 +38,7 @@ public class SlnWriter : IDisposable
         this.Solution = Solution;
         this.Task = Task;
     }
-    
+
     public SlnWriter(BuildTask Task, Stream Output, Solution Solution, SlnWriterSettings Settings)
     {
         Writer = new StreamWriter(Output);
@@ -54,7 +54,7 @@ public class SlnWriter : IDisposable
         Builder.AppendLine($"({Key}) = {Value}");
         SectionNames.Add(SectionName);
     }
-    
+
     private void BeginSection(string SectionName)
     {
         Builder.AppendLine($"{GetIndentation()}{SectionName}");
@@ -89,79 +89,75 @@ public class SlnWriter : IDisposable
                 Indentation.Append(Settings.IndentationCharacter.ToString());
             }
         }
+
         return Indentation.ToString();
     }
-    
-    
+
 
     public void Write()
     {
         // Header
-        WriteLine($"Microsoft Visual Studio Solution File, Format Version 12.00");
-        WriteLine($"# Visual Studio 17");
+        WriteLine("Microsoft Visual Studio Solution File, Format Version 12.00");
+        WriteLine("# Visual Studio 17");
         WriteLine($"# Astro Make {Version.AstroVersion} Generated Solution File");
         WriteLine("# (C) Erwann Messoah 2023");
         WriteLine("# https://github.com/AstroMake\n");
-
+        
         foreach (Project Project in Solution.Projects)
         {
-            Guid ProjectTypeGUID = (Project.Language == Language.C || Project.Language == Language.CPlusPlus)
-                ? new Guid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942")
-                : new Guid("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC");
-            
-            BeginSection("Project", $"\"{{{ProjectTypeGUID}}}\"", $"\"{Project.Name}\", \"{Path.ChangeExtension(Path.Combine(Project.TargetDirectory, Project.Name), Extensions.VisualCXXProject)}\", \"{{{Project.GUID}}}\"");
+            BeginSection("Project", $"\"{{{Project.ProjectTypeGuid}}}\"", 
+                $"\"{Project.Name}\", \"{Project.TargetPath}\", \"{{{Project.Guid}}}\"");
             EndSection();
         }
 
         WriteLine("");
         BeginSection("Global");
-            BeginSection("GlobalSection", "SolutionConfigurationPlatforms", "preSolution");
-            
-            foreach (Project App in Solution.Projects)
+        BeginSection("GlobalSection", "SolutionConfigurationPlatforms", "preSolution");
+
+        foreach (Configuration Configuration in Solution.Configurations)
+        {
+            if (Solution.Platforms.Count != 0)
             {
-                foreach (Configuration Configuration in Solution.Configurations)
+                foreach (string Platform in Solution.Platforms)
                 {
-                    if (Solution.Platforms.Count != 0)
-                    {
-                        foreach (string Platform in Solution.Platforms)
-                        {
-                            WriteLine($"{Configuration.Name}|{Platform} = {Configuration.Name}|{Platform}");
-                        }
-                    }
-                    else
-                    {
-                        WriteLine($"{Configuration.Name}|{Solution.Architecture} = {Configuration.Name}|{Solution.Architecture}");
-                    }
+                    WriteLine($"{Configuration.Name}|{Platform} = {Configuration.Name}|{Platform}");
                 }
             }
-            EndSection();
-            
-            BeginSection("GlobalSection", "ProjectConfigurationPlatforms", "postSolution");
-                foreach (Project Project in Solution.Projects)
+            else
+            {
+                WriteLine($"{Configuration.Name}|{Solution.Architecture} = {Configuration.Name}|{Solution.Architecture}");
+            }
+        }
+
+        EndSection();
+
+        BeginSection("GlobalSection", "ProjectConfigurationPlatforms", "postSolution");
+        foreach (Project Project in Solution.Projects)
+        {
+            foreach (Configuration Configuration in Solution.Configurations)
+            {
+                if (Solution.Platforms.Count != 0)
                 {
-                    foreach (Configuration Configuration in Solution.Configurations)
+                    foreach (string Platform in Solution.Platforms)
                     {
-                        if (Solution.Platforms.Count != 0)
-                        {
-                            foreach (string Platform in Solution.Platforms)
-                            {
-                                WriteLine($"{{{Project.GUID}}}.{Configuration.Name}|{Platform}.ActiveCfg = {Configuration.Name} {Platform}|{Solution.Architecture}");
-                                WriteLine($"{{{Project.GUID}}}.{Configuration.Name}|{Platform}.Build.0 = {Configuration.Name} {Platform}|{Solution.Architecture}");
-                            }
-                        }
-                        else
-                        {
-                            WriteLine($"{{{Project.GUID}}}.{Configuration.Name}|{Solution.Architecture}.ActiveCfg = {Configuration.Name} {Solution.Architecture}|{Solution.Architecture}");
-                            WriteLine($"{{{Project.GUID}}}.{Configuration.Name}|{Solution.Architecture}.Build.0 = {Configuration.Name} {Solution.Architecture}|{Solution.Architecture}");
-                        }
+                        WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Platform}.ActiveCfg = {Configuration.Name} {Platform}|{Solution.Architecture}");
+                        WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Platform}.Build.0 = {Configuration.Name} {Platform}|{Solution.Architecture}");
                     }
                 }
-            EndSection();
-            
-        
-            BeginSection("GlobalSection", "SolutionProperties", "preSolution");
-            WriteProperty("HideSolutionNode", "FALSE");
-            EndSection();
+                else
+                {
+                    WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Solution.Architecture}.ActiveCfg = {Configuration.Name}|{Solution.Architecture}");
+                    WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Solution.Architecture}.Build.0 = {Configuration.Name}|{Solution.Architecture}");
+                }
+            }
+        }
+
+        EndSection();
+
+
+        BeginSection("GlobalSection", "SolutionProperties", "preSolution");
+        WriteProperty("HideSolutionNode", "FALSE");
+        EndSection();
         EndSection();
 
         Writer.Write(Builder.ToString());

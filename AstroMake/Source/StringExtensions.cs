@@ -14,5 +14,21 @@ public static class StringExtensions
         if (FalseValues.Any(val => val.Equals(value))) return false;
         return false;
     }
+
+    public static string FindAndTrimEnd(this string str, string sequence)
+    {
+        int SequencePosition = str.IndexOf(sequence, StringComparison.Ordinal);
+        if (SequencePosition == -1) return string.Empty;
+
+        return str.Substring(0, SequencePosition);
+    }
+    
+    public static string FindAndTrimStart(this string str, string sequence)
+    {
+        int SequencePosition = str.IndexOf(sequence, StringComparison.Ordinal);
+        if (SequencePosition == -1) return string.Empty;
+
+        return str.Substring(SequencePosition);
+    }
     
 }

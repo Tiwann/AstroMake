@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace AstroMake;
 public class Version : Object, IComparable<Version>
@@ -36,6 +37,6 @@ public class Version : Object, IComparable<Version>
         return $"{Major}.{Minor}";
     }
 
-    public static readonly Version AstroVersion = new (1, 0);
+    public static readonly Version AstroVersion = new (Convert.ToUInt16(Assembly.GetExecutingAssembly().GetName().Version.Major), Convert.ToUInt16(Assembly.GetExecutingAssembly().GetName().Version.Minor));
 }
 

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace AstroMake;
 
@@ -8,15 +8,7 @@ namespace AstroMake;
 /// </summary>
 public class Configuration 
 {
-    /// <summary>
-    /// Configuration's name
-    /// </summary>
-    public string Name;
-    
-    /// <summary>
-    /// Flags
-    /// <see cref="ConfigurationFlags"/>
-    /// </summary>
+    public string Name { get; set; }
     public ConfigurationFlags Flags;
 
     public Configuration(string Name, ConfigurationFlags Flags)
@@ -29,5 +21,16 @@ public class Configuration
     {
         this.Name = Name;
         Flags = ConfigurationFlags.None;
+    }
+
+    public static IEnumerable<Configuration> CreateConfigurations(params string[] Configurations)
+    {
+        List<Configuration> Result = new List<Configuration>();
+        foreach (string S in Configurations)
+        {
+            Result.Add(new Configuration(S));
+        }
+
+        return Result;
     }
 }
