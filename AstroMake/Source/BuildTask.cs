@@ -222,14 +222,6 @@ public class BuildTask
             {
                 throw new BuildFailedException($"Please specify a location for project \"{Project.Name}\".");
             }
-
-            if (Project.Language.IsC() && !Project.Dialect.IsCPP())
-            {
-                Log.Warning($"> Project \"{Project.Name}\": Dialect \"{Project.Dialect.GetString()}\" does not match with language \"{Project.Language.GetString()}\".");
-                Project.Dialect = Project.Language.IsC() ? Dialect.CPPLatest : Dialect.CSharpLatest;
-                Log.Warning($"> Dialec is now set to {Project.Dialect.GetString()}");
-                
-            }
         });
 
         switch (BuildType)
@@ -261,7 +253,8 @@ public class BuildTask
         {
             if (!Directory.Exists(Project.TargetDirectory))
             {
-                throw new DirectoryNotFoundException($"The target directory of application \"{Project.Name}\" was not found.");
+                Directory.CreateDirectory(Project.TargetDirectory);
+                //throw new DirectoryNotFoundException($"The target directory of application \"{Project.Name}\" was not found.");
             }
             
             string Filepath = Path.ChangeExtension(Project.TargetPath, Extensions.VisualCXXProject);
