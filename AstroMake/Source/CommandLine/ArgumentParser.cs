@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -117,17 +118,51 @@ public class ArgumentParser
         }
     }
 
+
+    private int GetDescMaxLength(IEnumerable<CommandLineOption> TheOptions)
+    {
+        int MaxChars = 0;
+        foreach (CommandLineOption Option in TheOptions)
+        {
+            string Values = Option.PossibleValues != null ? $"[{Option.PossibleValues.Name}]" : string.Empty;
+            string Desc = $"{Settings.ShortFormatPrefix}{Option.ShortName} {Settings.LongFormatPrefix}{Option.LongName} {Values}";
+            MaxChars = Math.Max(MaxChars, Desc.Length);
+            if (Option.PossibleValues != null)
+            {
+                foreach (CommandLineOptionPossibleValue PossibleValue in Option.PossibleValues.PossibleValues)
+                {
+                    MaxChars = Math.Max(MaxChars, PossibleValue.Name.Length);
+                } 
+            }
+        }
+
+        return MaxChars;
+    }
+
+    private int GetDescLength(CommandLineOption Option)
+    {
+        string Values = Option.PossibleValues != null ? $"[{Option.PossibleValues.Name}]" : string.Empty;
+        string Desc = $"{Settings.ShortFormatPrefix}{Option.ShortName} {Settings.LongFormatPrefix}{Option.LongName} {Values}";
+        return Desc.Length;
+    }
+    
     public string GetHelpText()
     {
         StringBuilder Builder = new();
         Builder.AppendLine($"Usage: {Assembly.GetExecutingAssembly().GetName().Name} [options]");
         Builder.AppendLine("options:");
+
+
+        int MaxDescLength = GetDescMaxLength(Options);
+        
         foreach (CommandLineOption Option in Options)
         {
             string Values = Option.PossibleValues != null ? $"[{Option.PossibleValues.Name}]" : string.Empty;
-            string Tabs = string.IsNullOrEmpty(Values) ? "\t\t" : "\t";
+            string Space = string.Empty;
+            int SpaceLength = MaxDescLength - GetDescLength(Option) + 1;
+            for (int i = 0; i < SpaceLength; i++) Space += " ";
             string Required = Option.Required ? "(Required)" : string.Empty;
-            Builder.AppendLine($"    {Settings.ShortFormatPrefix}{Option.ShortName} {Settings.LongFormatPrefix}{Option.LongName} {Values}{Tabs}{Option.HelpText} {Required}");
+            Builder.AppendLine($"    {Settings.ShortFormatPrefix}{Option.ShortName} {Settings.LongFormatPrefix}{Option.LongName} {Values}{Space}\t{Option.HelpText} {Required}");
         }
 
         foreach (CommandLineOption Option in Options)
@@ -136,7 +171,10 @@ public class ArgumentParser
             Builder.AppendLine($"{Option.PossibleValues.Name}:");
             foreach (CommandLineOptionPossibleValue PossibleValue in Option.PossibleValues.PossibleValues)
             {
-                Builder.AppendLine($"    {PossibleValue.Name}\t{PossibleValue.HelpText}");
+                string Space = string.Empty;
+                int SpaceLength = MaxDescLength - PossibleValue.Name.Length + 1;
+                for (int i = 0; i < SpaceLength; i++) Space += " ";
+                Builder.AppendLine($"    {PossibleValue.Name}{Space}\t{PossibleValue.HelpText}");
             }
         }
         return Builder.ToString();
