@@ -2,13 +2,29 @@
 
 namespace AstroMake;
 
-public enum Dialect
+public enum CStandard
 {
+    None,
+    C03,
+    C11,
+    C17,
+    C23,
+    CLatest
+}
+
+public enum CPPStandard
+{
+    None,
     CPP20,
     CPP17,
     CPP14,
     CPP11,
     CPPLatest,
+}
+
+public enum CSharpVersion
+{
+    None,
     CSharp8,
     CSharp9,
     CSharp10,
@@ -16,39 +32,49 @@ public enum Dialect
     CSharpLatest
 }
 
+
+
 public static class DialectHelpers
 {
-    public static bool IsCPP(this Dialect Dialect)
+    
+    public static string GetString(this CStandard Standard)
     {
-        return Dialect is Dialect.CPP11 or Dialect.CPP14 or Dialect.CPP17 or Dialect.CPP20 or Dialect.CPPLatest;
-    }
-
-    public static string GetString(this Dialect Dialect)
-    {
-        switch (Dialect)
+        return Standard switch
         {
-            case Dialect.CPP20:
-                return "C++20";
-            case Dialect.CPP17:
-                return "C++17";
-            case Dialect.CPP14:
-                return "C++14";
-            case Dialect.CPP11:
-                return "C++11";
-            case Dialect.CPPLatest:
-                return "C++ Latest";
-            case Dialect.CSharp8:
-                return "C#8";
-            case Dialect.CSharp9:
-                return "C#9";
-            case Dialect.CSharp10:
-                return "C#10";
-            case Dialect.CSharp11:
-                return "C#11";
-            case Dialect.CSharpLatest:
-                return "C# Latest";
-            default:
-                throw new ArgumentOutOfRangeException(nameof(Dialect), Dialect, null);
-        }
+            CStandard.C03 => "C03",
+            CStandard.C11 => "C11",
+            CStandard.C17 => "C17",
+            CStandard.C23 => "C23",
+            CStandard.CLatest => "CLatest",
+            _ => throw new ArgumentOutOfRangeException(nameof(Standard), Standard, null)
+        };
+    }
+    
+    public static string GetString(this CPPStandard Standard)
+    {
+        return Standard switch
+        {
+            CPPStandard.CPP20 => "C++20",
+            CPPStandard.CPP17 => "C++17",
+            CPPStandard.CPP14 => "C++14",
+            CPPStandard.CPP11 => "C++11",
+            CPPStandard.CPPLatest => "C++ Latest",
+            _ => throw new ArgumentOutOfRangeException(nameof(Standard), Standard, null)
+        };
+    }
+    
+    
+    
+    public static string GetString(this CSharpVersion Version)
+    {
+        return Version switch
+        {
+            CSharpVersion.CSharp8 => "C#8",
+            CSharpVersion.CSharp9 => "C#9",
+            CSharpVersion.CSharp10 => "C#10",
+            CSharpVersion.CSharp11 => "C#11",
+            CSharpVersion.CSharpLatest => "C#Latest",
+            _ => throw new ArgumentOutOfRangeException(nameof(Version), Version, null)
+        };
     }
 }
