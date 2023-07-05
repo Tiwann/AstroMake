@@ -40,7 +40,9 @@ public abstract class Project
     public OutputType Type { get; protected set; }
     public Language Language { get; protected set; }
     public ProjectFlags Flags { get; protected set; }
-    public Dialect Dialect { get; set; }
+    public CPPStandard CppStandard { get; set; } = CPPStandard.CPP20;
+    public CStandard CStandard { get; set; } = CStandard.C17;
+    public CSharpVersion CSharpVersion { get; set; } = CSharpVersion.CSharp11;
     public List<string> Files { get; protected set; }
     public List<string> AdditionalFiles { get; protected set; }
     public List<string> IncludeDirectories { get; protected set; }
