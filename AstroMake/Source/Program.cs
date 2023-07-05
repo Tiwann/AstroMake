@@ -24,7 +24,7 @@ internal static class Program
             Log.Trace($"> Deleting {F}");
             File.Delete(F);
         }
-        File.Delete("config.astro");
+        File.Delete("astromake");
         Log.Success("> Done!");
         Environment.Exit(0);
     }
@@ -38,7 +38,7 @@ internal static class Program
 
         // Setting up the parser
         ArgumentParser Parser = new(Arguments, ArgumentParserSettings.WindowsStyle);
-        Parser.AddOptions(Options.Help, Options.Source, Options.Build, Options.RootDir, Options.Clean);
+        Parser.AddOptions(Options.Help, Options.Source, Options.Build, Options.RootDir, Options.Clean, Options.Verbose);
         
         // Parse the arguments
         try
@@ -102,6 +102,11 @@ internal static class Program
             catch (DirectoryNotFoundException Exception)
             {
                 Log.Error(Exception.Message);
+            }
+            catch (NotImplementedException)
+            {
+                Log.Error("This function is not yet available. Please wait for future updates.");
+                Environment.Exit(0);
             }
         }
 
