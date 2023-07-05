@@ -12,6 +12,7 @@ public static class Options
     public static readonly CommandLineOption RootDir;
     public static readonly CommandLineOption Source;
     public static readonly CommandLineOption Clean;
+    public static readonly CommandLineOption Verbose;
 
     static Options()
     {
@@ -24,5 +25,6 @@ public static class Options
         RootDir = new CommandLineOption('d', "dir", false, false, "Specify a build script search root directory");
         Source = new CommandLineOption('s', "source", false, true, "Add specific build script to the build queue");
         Clean = new CommandLineOption('c', "clean", false, false, "Clean all generated files");
+        Verbose = new CommandLineOption('v', "verbose", false, false, "Log all warnings and informations");
     }
 }
