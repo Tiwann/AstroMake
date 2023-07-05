@@ -23,14 +23,13 @@ public class Configuration
         Flags = ConfigurationFlags.None;
     }
 
-    public static IEnumerable<Configuration> CreateConfigurations(params string[] Configurations)
+    public static List<Configuration> CreateConfigurations(params string[] Configurations)
     {
         List<Configuration> Result = new List<Configuration>();
         foreach (string S in Configurations)
         {
             Result.Add(new Configuration(S));
         }
-
         return Result;
     }
 }
