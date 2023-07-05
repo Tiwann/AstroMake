@@ -15,4 +15,6 @@ Binaries-Intermediate
 **/bin
 **/obj
 
-.AstroMake
+Examples/*/Binaries
+Examples/*/Intermediate
+Examples/*/astromake
