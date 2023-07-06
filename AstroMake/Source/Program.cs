@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace AstroMake;
 
@@ -16,14 +15,22 @@ internal static class Program
             Log.Error("config.astro file not found!");
             Environment.Exit(-1);
         }
-        
-        IEnumerable<string> Files = File.ReadLines("astromake").Where(S => !S.StartsWith("#") && File.Exists(S));
 
+        List<string> FileContent = File.ReadLines("astromake").ToList();
+        IEnumerable<string> Files = FileContent.Where(S => !S.StartsWith("#") && File.Exists(S));
+        IEnumerable<string> Directories = FileContent.Where(S => !S.StartsWith("#") && Directory.Exists(S));
         foreach (string F in Files)
         {
             Log.Trace($"> Deleting {F}");
             File.Delete(F);
         }
+        
+        foreach (string D in Directories)
+        {
+            Log.Trace($"> Deleting {D}");
+            Directory.Delete(D);
+        }
+        
         File.Delete("astromake");
         Log.Success("> Done!");
         Environment.Exit(0);
@@ -34,8 +41,7 @@ internal static class Program
         // Hello Astro Make
         Log.Trace($"Astro Make {Version.AstroVersion}");
         Log.Trace("Copyright (C) 2023 Erwann Messoah");
-        Log.Trace("Using dotnet framework 4.8.1\n");
-
+        
         // Setting up the parser
         ArgumentParser Parser = new(Arguments, ArgumentParserSettings.WindowsStyle);
         Parser.AddOptions(Options.Help, Options.Source, Options.Build, Options.RootDir, Options.Clean, Options.Verbose);
@@ -67,6 +73,9 @@ internal static class Program
         {
             Log.Trace(Parser.GetHelpText());
         }
+        
+        // Handle Verbosity
+        Log.Verbose = Parser.GetValue<bool>(Options.Verbose);
 
         // Handle clean
         if (Parser.GetValue<bool>(Options.Clean))
