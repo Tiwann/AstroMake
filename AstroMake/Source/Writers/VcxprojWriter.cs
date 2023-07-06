@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Xml;
 
 namespace AstroMake;
@@ -85,6 +83,13 @@ public class VcxprojWriter : IDisposable
         Writer.WriteEndElement();
     }
     
+    private void WriteProperty(string Name, CStandard Standard)
+    {
+        Writer.WriteStartElement(Name);
+        Writer.WriteString(GetStandard(Standard));
+        Writer.WriteEndElement();
+    }
+    
     private void WriteProperty(string Name, OutputType Type)
     {
         Writer.WriteStartElement(Name);
@@ -152,6 +157,25 @@ public class VcxprojWriter : IDisposable
                 return "stdcpp11";
             case CPPStandard.CPPLatest:
                 return "stdcpplatest";
+            case CPPStandard.None:
+                return "Default";
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+    
+    private string GetStandard(CStandard Standard)
+    {
+        switch (Standard)
+        {
+            case CStandard.C11:
+                return "stdc11";
+            case CStandard.C17:
+                return "stdc17";
+            case CStandard.CLatest:
+                return "stdclatest";
+            case CStandard.None:
+                return "Default";
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -197,6 +221,7 @@ public class VcxprojWriter : IDisposable
             // Write globals
             WriteElement("PropertyGroup", ("Label", "Globals"), delegate
             {
+                WriteProperty("TargetName", Project.TargetName);
                 WriteProperty("ProjectGuid", Project.Guid);
                 WriteProperty("ConfigurationType", Project.Type);
                 WriteProperty("CharacterSet", "Unicode");
@@ -214,7 +239,8 @@ public class VcxprojWriter : IDisposable
                 WriteElement("ClCompile", delegate
                 {
                     WriteProperty("LanguageStandard", Project.CppStandard);
-            
+                    WriteProperty("LanguageStandard_C", Project.CStandard);
+                    
                     // Enable modules if c++20 or above
                     if (Project.Flags.Contains(ProjectFlags.ModuleSupport) && Project.CppStandard >= CPPStandard.CPP20)
                     {
@@ -225,6 +251,12 @@ public class VcxprojWriter : IDisposable
                     if (Project.Flags.Contains(ProjectFlags.MultiProcessorCompile))
                     {
                         WriteProperty("MultiProcessorCompilation", true);
+                    }
+
+                    // wchar_t
+                    if (Project.Flags.Contains(ProjectFlags.BuiltInWideCharType))
+                    {
+                        WriteProperty("TreatWChar_tAsBuiltInType", true);
                     }
                 });
             });
@@ -276,6 +308,7 @@ public class VcxprojWriter : IDisposable
 
             IEnumerable<string> AvailableSourceExtensions = new[] { ".c", ".cpp", ".cxx", ".cc" };
             IEnumerable<string> AvailableHeaderExtensions = new[] { ".h", ".hpp", ".hxx", ".hh", ".inl", ".inc" };
+            
 
             if (Files.Count != 0)
             {
@@ -293,7 +326,7 @@ public class VcxprojWriter : IDisposable
                         }
                     }
                 });
-
+                
                 // Headers
                 Writer.WriteComment("Including header files");
                 WriteElement("ItemGroup", ("Label", "Headers"), delegate
