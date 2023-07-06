@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace AstroMake;
 
@@ -34,7 +33,6 @@ public abstract class Project
             }
         }
     }
-
     
     public string TargetPath => Path.ChangeExtension(Path.Combine(TargetDirectory, TargetName), Extension);
     public OutputType Type { get; protected set; }
@@ -46,10 +44,12 @@ public abstract class Project
     public List<string> Files { get; protected set; }
     public List<string> AdditionalFiles { get; protected set; }
     public List<string> IncludeDirectories { get; protected set; }
+    public List<string> LibrariesDirectories { get; protected set; }
     public List<string> Defines { get; protected set; }
     public List<string> Links { get; protected set; }
     public Guid Guid { get; }
 
+    
     public Guid ProjectTypeGuid
     {
         get
@@ -72,12 +72,11 @@ public abstract class Project
         Files = new();
         AdditionalFiles = new();
         IncludeDirectories = new();
+        LibrariesDirectories = new();
         Defines = new();
         Links = new();
         Flags = ProjectFlags.None;
         this.Solution = Solution;
         Guid = Guid.NewGuid();
-        BinariesDirectory = Path.Combine(Solution.Location, "Binaries");
-        IntermediateDirectory = Path.Combine(Solution.Location, "Intermediate");
     }
 }
