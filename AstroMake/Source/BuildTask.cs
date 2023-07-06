@@ -302,6 +302,11 @@ public class BuildTask
         {
             Builder.AppendLine(GeneratedFile);
         }
+
+        if (Solution.TargetDirectory != RootDirectory)
+        {
+            Builder.AppendLine(Solution.TargetDirectory);
+        }
         File.WriteAllText(Filepath, Builder.ToString());
     }
 }
