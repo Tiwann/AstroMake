@@ -5,10 +5,8 @@ namespace AstroMake;
 public enum CStandard
 {
     None,
-    C03,
     C11,
     C17,
-    C23,
     CLatest
 }
 
@@ -41,10 +39,8 @@ public static class DialectHelpers
     {
         return Standard switch
         {
-            CStandard.C03 => "C03",
             CStandard.C11 => "C11",
             CStandard.C17 => "C17",
-            CStandard.C23 => "C23",
             CStandard.CLatest => "CLatest",
             _ => throw new ArgumentOutOfRangeException(nameof(Standard), Standard, null)
         };
