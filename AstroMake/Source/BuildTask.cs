@@ -20,7 +20,7 @@ public enum BuildTaskType
 public class BuildTask
 {
     private readonly BuildTaskType BuildType;
-    private readonly List<string> BuildScripts = new();
+    public List<string> BuildScripts { get; } = new();
     public string RootDirectory { get; set; } = Directory.GetCurrentDirectory();
     private CompilerResults CompilerResults;
 
@@ -254,12 +254,12 @@ public class BuildTask
             if (!Directory.Exists(Project.TargetDirectory))
             {
                 Directory.CreateDirectory(Project.TargetDirectory);
-                //throw new DirectoryNotFoundException($"The target directory of application \"{Project.Name}\" was not found.");
             }
             
             string Filepath = Path.ChangeExtension(Project.TargetPath, Extensions.VisualCXXProject);
             GeneratedFiles.Add(Filepath);
             using FileStream Stream = File.Open(Filepath, FileMode.OpenOrCreate, FileAccess.Write);
+            Stream.SetLength(0);
             using VcxprojWriter Writer = new(Stream, Project);
             Writer.Write();
             Log.Trace($"> Generated {Filepath}");
@@ -268,10 +268,12 @@ public class BuildTask
         // Write Sln file
         if (!Directory.Exists(Solution.TargetDirectory))
             Directory.CreateDirectory(Solution.TargetDirectory);
+        
         string SlnFilepath = $"{Solution.TargetDirectory}\\{Solution.Name}{Extensions.VisualStudioSolution}";
         GeneratedFiles.Add(SlnFilepath);
         using FileStream SlnStream = new (SlnFilepath, FileMode.OpenOrCreate, FileAccess.Write);
         using SlnWriter SlnWriter = new (this, SlnStream, Solution);
+        SlnStream.SetLength(0);
         SlnWriter.Write();
         Log.Trace($"> Generated {SlnFilepath}");
 
