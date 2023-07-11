@@ -3,8 +3,6 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 
-
-
 [Build]
 public class HelloWorldSolution : Solution
 {
@@ -14,22 +12,24 @@ public class HelloWorldSolution : Solution
         Configurations = Configuration.CreateConfigurations("Debug", "Release");
         Architecture = Architecture.x64;
         ProjectNames.Add("HelloWorld");
-        TargetDirectory = Path.Combine(Location, "Build");
+        TargetDirectory = Location;
     }
 }
 
 [Build]
-public class HelloWorldApplication : ConsoleApplication
+public class HelloWorldProject : StaticLibrary
 {
-    public HelloWorldApplication(Solution Solution) : base(Solution)
+    public HelloWorldProject(Solution Solution) : base(Solution)
     {
         Name = "HelloWorld";
         Language = Language.CPlusPlus;
         CppStandard = CPPStandard.CPP20;
         Flags = ProjectFlags.MultiProcessorCompile;
         Location = Path.Combine(Solution.Location, Name);
-        TargetDirectory = Solution.TargetDirectory;
+        TargetDirectory = Location;
         TargetName = "HelloWorld";
         Files.Add(@"Source\HelloWorld.cpp");
+		BinariesDirectory = Path.Combine(Solution.Location, "Binaries");
+		IntermediateDirectory = Path.Combine(Solution.Location, "Intermediate");
     }
 }
