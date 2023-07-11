@@ -28,6 +28,11 @@ public static class Extenders
         return List.Count() == 0;
     }
 
+    public static void AddRange<T>(this List<T> List, params T[] Objects)
+    {
+        List.AddRange(new List<T>(Objects));
+    }
+
     public static bool Contains<T>(this T TheEnum, T Value) where T : Enum
     {
         return Convert.ToBoolean(Convert.ToInt32(TheEnum) & Convert.ToInt32(Value));
@@ -73,5 +78,12 @@ public static class Extenders
         }
 
         return path;
+    }
+
+    public static bool DirectoryIsEmpty(this string Path)
+    {
+        var Directories = Directory.EnumerateDirectories(Path);
+        var Files = Directory.EnumerateFiles(Path);
+        return Directories.IsEmpty() && Files.IsEmpty();
     }
 }
