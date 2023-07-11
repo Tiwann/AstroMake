@@ -71,7 +71,7 @@ public class VcxprojWriter : IDisposable
     private void WriteProperty(string Name, Guid Value)
     {
         Writer.WriteStartElement(Name);
-        Writer.WriteString($"{{{Value}}}");
+        Writer.WriteString($"{{{Value}}}".ToUpper());
         Writer.WriteEndElement();
         
     }
@@ -230,8 +230,8 @@ public class VcxprojWriter : IDisposable
                 WriteProperty("RootNamespace", Project.Name);
                 WriteProperty("IgnoreWarnCompileDuplicatedFilename", true);
                 WriteProperty("Keyword", "Win32Proj");
-                WriteProperty("OutDir", Project.BinariesDirectory.EndsWith("\\") ? Project.BinariesDirectory : $"{Project.BinariesDirectory}\\");
-                WriteProperty("IntDir", Project.IntermediateDirectory.EndsWith("\\") ? Project.IntermediateDirectory : $"{Project.IntermediateDirectory}\\");
+                WriteProperty("OutDir", Project.BinariesDirectory.EndsWith(@"\") ? Project.BinariesDirectory : $@"{Project.BinariesDirectory}\");
+                WriteProperty("IntDir", Project.IntermediateDirectory.EndsWith(@"\") ? Project.IntermediateDirectory : $@"{Project.IntermediateDirectory}\");
             });
             
             WriteElement("ItemDefinitionGroup", ("Label", "Globals"), delegate
@@ -242,22 +242,34 @@ public class VcxprojWriter : IDisposable
                     WriteProperty("LanguageStandard_C", Project.CStandard);
                     
                     // Enable modules if c++20 or above
-                    if (Project.Flags.Contains(ProjectFlags.ModuleSupport) && Project.CppStandard >= CPPStandard.CPP20)
-                    {
-                        WriteProperty("EnableModules", true);
-                    }
+                    WriteProperty("EnableModules", Project.Flags.Contains(ProjectFlags.ModuleSupport) && Project.CppStandard >= CPPStandard.CPP20);
             
                     // Enable multiprocessor compile
-                    if (Project.Flags.Contains(ProjectFlags.MultiProcessorCompile))
-                    {
-                        WriteProperty("MultiProcessorCompilation", true);
-                    }
+                    WriteProperty("MultiProcessorCompilation", Project.Flags.Contains(ProjectFlags.MultiProcessorCompile));
 
-                    // wchar_t
-                    if (Project.Flags.Contains(ProjectFlags.BuiltInWideCharType))
+                    // Wchar_t
+                    WriteProperty("TreatWChar_tAsBuiltInType", Project.Flags.Contains(ProjectFlags.BuiltInWideCharType));
+
+                    string Defines = string.Empty;
+                    Project.Defines.Add("%(PreprocessorDefinitions)");
+                    Project.Defines.ForEach(Define =>
                     {
-                        WriteProperty("TreatWChar_tAsBuiltInType", true);
-                    }
+                        Defines += Define;
+                        if (Define != Project.Defines.Last())
+                            Defines += ";";
+                    });
+                    WriteProperty("PreprocessorDefinitions", Defines);
+                    
+                    
+                    string Includes = string.Empty;
+                    Project.IncludeDirectories.ForEach(Inc =>
+                    {
+                        Includes += Project.Location.GetRelativePath(Inc);
+                        if (Inc != Project.IncludeDirectories.Last())
+                            Includes += ";";
+                    });
+                    
+                    WriteProperty("AdditionalIncludeDirectories", Includes);
                 });
             });
             
@@ -271,6 +283,7 @@ public class VcxprojWriter : IDisposable
                 WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.targets"));
             });
             
+            // Project references
             if (!Project.Links.IsEmpty())
             {
                 Writer.WriteComment("Project references");
@@ -281,9 +294,10 @@ public class VcxprojWriter : IDisposable
                     {
                         foreach (Project Proj in Projects)
                         {
-                            WriteStartElement("ProjectReference", ("Include", @$"{Proj.TargetPath}"));
-                            WriteProperty("ProjectReference", Proj.Guid);
-                            Writer.WriteEndElement();
+                            WriteElement("ProjectReference", ("Include", Proj.TargetPath), delegate
+                            {
+                                WriteProperty("ProjectReference", Proj.Guid);
+                            });
                         }
                     }
                 });
@@ -357,8 +371,7 @@ public class VcxprojWriter : IDisposable
                     }
                 });
             }
-
-
+            
             Writer.WriteEndElement();
         }
         catch (Exception Exception)
