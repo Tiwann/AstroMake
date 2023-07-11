@@ -79,6 +79,25 @@ public class SlnWriter : IDisposable
         WriteLine($"{Key} = {Value}");
     }
 
+    private void WriteProject(string Name, string Path, Guid ProjectType, Guid ProjectGuid)
+    {
+        BeginSection("Project", $"\"{{{ProjectType.ToString().ToUpper()}}}\"", 
+            $"\"{Name}\", \"{Path}\", \"{{{ProjectGuid.ToString().ToUpper()}}}\"");
+        EndSection();
+    }
+
+    private void WriteProject(Project Proj)
+    {
+        WriteProject(Proj.Name, Proj.TargetPath, Proj.ProjectTypeGuid, Proj.Guid);
+    }
+    
+    private void WriteProject(string Name, string Path, Guid ProjectType, Guid ProjectGuid, Action Content)
+    {
+        BeginSection("Project", $"\"{{{ProjectType}}}\"", $"\"{Name}\", \"{Path}\", \"{{{ProjectGuid.ToString().ToUpper()}}}\"");
+        Content.Invoke();
+        EndSection();
+    }
+
     private string GetIndentation()
     {
         StringBuilder Indentation = new StringBuilder();
@@ -103,13 +122,20 @@ public class SlnWriter : IDisposable
         WriteLine("# (C) Erwann Messoah 2023");
         WriteLine("# https://github.com/AstroMake\n");
         
-        foreach (Project Project in Solution.Projects)
+        
+        WriteProject("Astro Scripts", string.Empty, new Guid("2150E333-8FDC-42A3-9474-1A3956D46DE8"), Guid.NewGuid(), delegate
         {
-            BeginSection("Project", $"\"{{{Project.ProjectTypeGuid}}}\"", 
-                $"\"{Project.Name}\", \"{Project.TargetPath}\", \"{{{Project.Guid}}}\"");
+            BeginSection("ProjectSection", "SolutionItems", "preProject");
+            Task.BuildScripts.ForEach(B =>
+            {
+                WriteProperty(B, B);
+            });
             EndSection();
-        }
-
+        });
+        
+        
+        Solution.Projects.ForEach(WriteProject);
+        
         WriteLine("");
         BeginSection("Global");
         BeginSection("GlobalSection", "SolutionConfigurationPlatforms", "preSolution");
@@ -140,14 +166,14 @@ public class SlnWriter : IDisposable
                 {
                     foreach (string Platform in Solution.Platforms)
                     {
-                        WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Platform}.ActiveCfg = {Configuration.Name} {Platform}|{Solution.Architecture}");
-                        WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Platform}.Build.0 = {Configuration.Name} {Platform}|{Solution.Architecture}");
+                        WriteLine($"{{{Project.Guid.ToString().ToUpper()}}}.{Configuration.Name}|{Platform}.ActiveCfg = {Configuration.Name} {Platform}|{Solution.Architecture}");
+                        WriteLine($"{{{Project.Guid.ToString().ToUpper()}}}.{Configuration.Name}|{Platform}.Build.0 = {Configuration.Name} {Platform}|{Solution.Architecture}");
                     }
                 }
                 else
                 {
-                    WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Solution.Architecture}.ActiveCfg = {Configuration.Name}|{Solution.Architecture}");
-                    WriteLine($"{{{Project.Guid}}}.{Configuration.Name}|{Solution.Architecture}.Build.0 = {Configuration.Name}|{Solution.Architecture}");
+                    WriteLine($"{{{Project.Guid.ToString().ToUpper()}}}.{Configuration.Name}|{Solution.Architecture}.ActiveCfg = {Configuration.Name}|{Solution.Architecture}");
+                    WriteLine($"{{{Project.Guid.ToString().ToUpper()}}}.{Configuration.Name}|{Solution.Architecture}.Build.0 = {Configuration.Name}|{Solution.Architecture}");
                 }
             }
         }
