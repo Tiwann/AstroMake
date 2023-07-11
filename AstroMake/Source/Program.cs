@@ -2,40 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Xml;
 
 namespace AstroMake;
 
 internal static class Program
 {
-    private static void Clean()
-    {
-        Log.Trace("> Cleaning all generated files...");
-        if (!File.Exists("astromake"))
-        {
-            Log.Error("config.astro file not found!");
-            Environment.Exit(-1);
-        }
-
-        List<string> FileContent = File.ReadLines("astromake").ToList();
-        IEnumerable<string> Files = FileContent.Where(S => !S.StartsWith("#") && File.Exists(S));
-        IEnumerable<string> Directories = FileContent.Where(S => !S.StartsWith("#") && Directory.Exists(S));
-        foreach (string F in Files)
-        {
-            Log.Trace($"> Deleting {F}");
-            File.Delete(F);
-        }
-        
-        foreach (string D in Directories)
-        {
-            Log.Trace($"> Deleting {D}");
-            Directory.Delete(D);
-        }
-        
-        File.Delete("astromake");
-        Log.Success("> Done!");
-        Environment.Exit(0);
-    }
-    
     private static void Main(string[] Arguments)
     {
         // Hello Astro Make
@@ -73,14 +46,39 @@ internal static class Program
         {
             Log.Trace(Parser.GetHelpText());
         }
-        
+
         // Handle Verbosity
         Log.Verbose = Parser.GetValue<bool>(Options.Verbose);
+        
 
         // Handle clean
         if (Parser.GetValue<bool>(Options.Clean))
         {
-            Clean();
+            Log.Trace("> Cleaning all generated files...");
+            if (!File.Exists("astromake"))
+            {
+                Log.Error("config.astro file not found!");
+                Environment.Exit(-1);
+            }
+
+            List<string> FileContent = File.ReadLines("astromake").ToList();
+            IEnumerable<string> Files = FileContent.Where(S => !S.StartsWith("#") && File.Exists(S));
+            IEnumerable<string> Directories = FileContent.Where(S => !S.StartsWith("#") && Directory.Exists(S));
+            foreach (string F in Files)
+            {
+                Log.Trace($"> Deleting {F}");
+                File.Delete(F);
+            }
+        
+            foreach (string D in Directories)
+            {
+                Log.Trace($"> Deleting {D}");
+                Directory.Delete(D);
+            }
+        
+            File.Delete("astromake");
+            Log.Success("> Done!");
+            Environment.Exit(0);
         }
 
         if (Parser.GetBool(Options.Build))
@@ -98,6 +96,7 @@ internal static class Program
 
                 Task.Compile();
                 Task.Build();
+                Environment.Exit(0);
             }
             catch (ScriptCompilationFailedException Exception)
             {
