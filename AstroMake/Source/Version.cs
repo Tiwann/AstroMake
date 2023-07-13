@@ -2,7 +2,7 @@
 using System.Reflection;
 
 namespace AstroMake;
-public class Version : Object, IComparable<Version>
+public class Version : IComparable<Version>
 {
     public ushort Major { get; }
     public ushort Minor { get; }
