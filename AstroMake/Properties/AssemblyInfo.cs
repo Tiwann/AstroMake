@@ -7,8 +7,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("AstroMake")]
 [assembly: AssemblyCopyright("Copyright © Erwann Messoah 2023")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
 
 [assembly: ComVisible(false)]
 
