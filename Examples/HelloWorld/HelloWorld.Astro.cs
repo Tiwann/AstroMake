@@ -13,18 +13,19 @@ public class HelloWorldSolution : Solution
         Architecture = Architecture.x64;
         ProjectNames.Add("HelloWorld");
         TargetDirectory = Location;
+        
     }
 }
 
 [Build]
-public class HelloWorldProject : StaticLibrary
+public class HelloWorldProject : ConsoleApplication
 {
     public HelloWorldProject(Solution Solution) : base(Solution)
     {
         Name = "HelloWorld";
         Language = Language.CPlusPlus;
         CppStandard = CPPStandard.CPP20;
-        Flags = ProjectFlags.MultiProcessorCompile;
+        Flags = ProjectFlags.MultiProcessorCompile | ProjectFlags.;
         Location = Path.Combine(Solution.Location, Name);
         TargetDirectory = Location;
         TargetName = "HelloWorld";
