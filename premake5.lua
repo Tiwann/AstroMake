@@ -3,7 +3,6 @@ workspace "AstroMake"
 	configurations { "Debug", "Release" }
 
 	include "AstroMake/AstroMake.lua"
-	include "AstroMakeInstaller/AstroMakeInstaller.lua"
 
 
 	
