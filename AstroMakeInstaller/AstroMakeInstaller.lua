@@ -5,10 +5,13 @@ project "AstroMakeInstaller"
 	csversion "Latest"
 	targetdir "%{wks.location}/Binaries/%{prj.name}/%{cfg.buildcfg}"
 	objdir "%{wks.location}/Binaries-Intermediate/%{prj.name}/%{cfg.buildcfg}"
+	icon "%{wks.location}/Resources/AstroMakeInstallerLogo.ico"
 
 	files {
 		"Source/**.cs",
 		"AstroMakeInstaller.lua",
+		"../Resources/AstroMakeInstallerLogo.png",
+        "../Resources/AstroMakeInstallerLogo.ico",
 	}
 	
 	links {
