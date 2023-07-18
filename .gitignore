@@ -1,16 +1,16 @@
 **.idea
-.vs
-.vscode
+**.vs
+**.vscode
 Binaries
 Binaries-Intermediate
-*.sln
-*.csproj
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
-*.dll
-*.pdb
-*.DotSettings.user
+**.sln
+**.csproj
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user
+**.dll
+**.pdb
+**.DotSettings.user
 
 **/bin
 **/obj
