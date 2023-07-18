@@ -95,7 +95,7 @@ public class BuildTask
             GenerateInMemory = true,
             GenerateExecutable = false,
             IncludeDebugInformation = true,
-            ReferencedAssemblies = { Assembly.GetExecutingAssembly().Location }
+            ReferencedAssemblies = { Assembly.GetExecutingAssembly().Location },
         };
         
         CompilerResults = CodeProvider.CompileAssemblyFromFile(Parameters, BuildScripts.ToArray());
@@ -119,8 +119,6 @@ public class BuildTask
     public void Build()
     {
         Assembly CompiledAssembly = CompilerResults.CompiledAssembly;
-
-        
         Type SolutionType = CompiledAssembly.GetTypes().Single(Type =>
             Type.IsSubclassOf<Solution>() &&
             Type.GetCustomAttribute<BuildAttribute>() is not null);

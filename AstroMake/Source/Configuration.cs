@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 
 /// <summary>
@@ -10,26 +8,12 @@ public class Configuration
 {
     public string Name { get; set; }
     public ConfigurationFlags Flags;
+    public RuntimeType Runtime { get; set; }
 
-    public Configuration(string Name, ConfigurationFlags Flags)
+    public Configuration(string Name, RuntimeType Runtime, ConfigurationFlags Flags)
     {
         this.Name = Name;
         this.Flags = Flags;
-    }
-
-    public Configuration(string Name)
-    {
-        this.Name = Name;
-        Flags = ConfigurationFlags.None;
-    }
-
-    public static List<Configuration> CreateConfigurations(params string[] Configurations)
-    {
-        List<Configuration> Result = new List<Configuration>();
-        foreach (string S in Configurations)
-        {
-            Result.Add(new Configuration(S));
-        }
-        return Result;
+        this.Runtime = Runtime;
     }
 }

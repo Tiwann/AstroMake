@@ -30,4 +30,11 @@ public abstract class Solution
         ProjectNames = new List<string>();
         Projects = new List<Project>();
     }
+
+    protected void AddConfigurations(params Configuration[] Configs)
+    {
+        Configurations.AddRange(Configs);
+    }
+
+   
 }

@@ -15,6 +15,8 @@ project "AstroMake"
 		"../Resources/AstroMakeLogo.ico",
 	}
 	
+	
+	
 	links {
 	    "Microsoft.CSharp",
 	    "System",

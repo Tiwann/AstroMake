@@ -9,7 +9,7 @@ namespace AstroMake;
 public class VcxprojWriter : IDisposable
 {
     private readonly XmlTextWriter Writer;
-    private readonly Project Project;
+    private Project Project;
 
     public VcxprojWriter(Stream Output, Project Project)
     {
@@ -30,6 +30,20 @@ public class VcxprojWriter : IDisposable
     {
         Writer.WriteStartElement(Name);
         WriteAttribute(Attribute.Item1, Attribute.Item2);
+        foreach (Action Action in Content)
+        {
+            Action.Invoke();
+        }
+        Writer.WriteEndElement();
+    }
+
+    private void WriteElement(string Name, (string, string)[] Attributes, params Action[] Content)
+    {
+        Writer.WriteStartElement(Name);
+        foreach ((string, string) Attribute in Attributes)
+        {
+            WriteAttribute(Attribute.Item1, Attribute.Item2);
+        }
         foreach (Action Action in Content)
         {
             Action.Invoke();
@@ -97,6 +111,11 @@ public class VcxprojWriter : IDisposable
         Writer.WriteEndElement();
     }
 
+    private void WriteProperty(string Name, IEnumerable<string> List)
+    {
+        WriteProperty(Name, List.GetList(';'));
+    }
+
     private void WriteConfigurations(Solution Solutiuon)
     {
         WriteElement("ItemGroup", ("Label", "ProjectConfigurations"), delegate
@@ -108,19 +127,21 @@ public class VcxprojWriter : IDisposable
                     foreach (string Platform in Solutiuon.Platforms)
                     {
                         string ConfigName = $"{Configuration.Name} {Platform}";
-                        WriteStartElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solutiuon.Architecture}"));
-                        WriteProperty("Configuration", ConfigName);
-                        WriteProperty("Platform", $"{Solutiuon.Architecture}");
-                        Writer.WriteEndElement();
+                        WriteElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solutiuon.Architecture}"), delegate
+                        {
+                            WriteProperty("Configuration", ConfigName);
+                            WriteProperty("Platform", $"{Solutiuon.Architecture}");    
+                        });
                     }
                 }
                 else
                 {
                     string ConfigName = $"{Configuration.Name}";
-                    WriteStartElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solutiuon.Architecture}"));
-                    WriteProperty("Configuration", ConfigName);
-                    WriteProperty("Platform", $"{Solutiuon.Architecture}");
-                    Writer.WriteEndElement();
+                    WriteElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solutiuon.Architecture}"), delegate
+                    {
+                        WriteProperty("Configuration", ConfigName);
+                        WriteProperty("Platform", $"{Solutiuon.Architecture}");
+                    });
                 }
             }
         });
@@ -215,10 +236,13 @@ public class VcxprojWriter : IDisposable
             Writer.WriteComment("Astro Make (C) Erwann Messoah 2023");
             Writer.WriteComment("\"https://github.com/Tiwann/AstroMake\"");
 
-            WriteStartElement("Project", ("DefaultTargets", "Build"), ("xmlns", XmlStatics.XmlNamespace));
-            WriteConfigurations(Project.Solution);
-            
-            // Write globals
+            WriteElement("Project", new []{ ("DefaultTargets", "Build"), ("xmlns", XmlStatics.XmlNamespace)}, delegate
+            {
+                WriteConfigurations(Project.Solution);
+                
+                WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.Default.props"));
+                
+                // Write globals
             WriteElement("PropertyGroup", ("Label", "Globals"), delegate
             {
                 WriteProperty("TargetName", Project.TargetName);
@@ -230,9 +254,11 @@ public class VcxprojWriter : IDisposable
                 WriteProperty("RootNamespace", Project.Name);
                 WriteProperty("IgnoreWarnCompileDuplicatedFilename", true);
                 WriteProperty("Keyword", "Win32Proj");
-                WriteProperty("OutDir", Project.BinariesDirectory.EndsWith(@"\") ? Project.BinariesDirectory : $@"{Project.BinariesDirectory}\");
-                WriteProperty("IntDir", Project.IntermediateDirectory.EndsWith(@"\") ? Project.IntermediateDirectory : $@"{Project.IntermediateDirectory}\");
+                if(!string.IsNullOrEmpty(Project.BinariesDirectory)) WriteProperty("OutDir", Project.BinariesDirectory.EndsWith(@"\") ? Project.BinariesDirectory : $@"{Project.BinariesDirectory}\");
+                if(!string.IsNullOrEmpty(Project.IntermediateDirectory)) WriteProperty("IntDir", Project.IntermediateDirectory.EndsWith(@"\") ? Project.IntermediateDirectory : $@"{Project.IntermediateDirectory}\");
             });
+            
+            WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.props"));
             
             WriteElement("ItemDefinitionGroup", ("Label", "Globals"), delegate
             {
@@ -248,40 +274,18 @@ public class VcxprojWriter : IDisposable
                     WriteProperty("MultiProcessorCompilation", Project.Flags.Contains(ProjectFlags.MultiProcessorCompile));
 
                     // Wchar_t
-                    WriteProperty("TreatWChar_tAsBuiltInType", Project.Flags.Contains(ProjectFlags.BuiltInWideCharType));
-
-                    string Defines = string.Empty;
-                    Project.Defines.Add("%(PreprocessorDefinitions)");
-                    Project.Defines.ForEach(Define =>
-                    {
-                        Defines += Define;
-                        if (Define != Project.Defines.Last())
-                            Defines += ";";
-                    });
-                    WriteProperty("PreprocessorDefinitions", Defines);
+                    WriteProperty("TreatWChar_tAsBuiltInType", !Project.Flags.Contains(ProjectFlags.DisableBuiltInWideChar));
                     
+                    // Defines
+                    if(!Project.Defines.IsEmpty()) WriteProperty("PreprocessorDefinitions", Project.Defines.GetList(';'));
                     
-                    string Includes = string.Empty;
-                    Project.IncludeDirectories.ForEach(Inc =>
-                    {
-                        Includes += Project.Location.GetRelativePath(Inc);
-                        if (Inc != Project.IncludeDirectories.Last())
-                            Includes += ";";
-                    });
-                    
-                    WriteProperty("AdditionalIncludeDirectories", Includes);
+                    // Includes
+                    if(!Project.IncludeDirectories.IsEmpty()) WriteProperty("AdditionalIncludeDirectories", Project.IncludeDirectories.GetList(';'));
                 });
             });
             
 
-            // Import Microsoft targets and props
-            Writer.WriteComment("Import Microsoft targets");
-            WriteElement("ImportGroup", delegate
-            {
-                WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.Default.props"));
-                WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.props"));
-                WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.targets"));
-            });
+            
             
             // Project references
             if (!Project.Links.IsEmpty())
@@ -334,9 +338,10 @@ public class VcxprojWriter : IDisposable
                     {
                         if (AvailableSourceExtensions.Any(E => Source.EndsWith(E)))
                         {
-                            Writer.WriteStartElement("ClCompile");
-                            WriteAttribute("Include", Project.TargetDirectory.GetRelativePath(Path.Combine(Project.Location, Source)));
-                            Writer.WriteEndElement();
+                            WriteElement("ClCompile", delegate
+                            {
+                                WriteAttribute("Include", Project.TargetDirectory.GetRelativePath(Path.Combine(Project.Location, Source)));
+                            });
                         }
                     }
                 });
@@ -347,11 +352,12 @@ public class VcxprojWriter : IDisposable
                 {
                     foreach (string Header in Files)
                     {
-                        if (AvailableHeaderExtensions.Any(E => Header.EndsWith(E)) && File.Exists(Header))
+                        if (AvailableHeaderExtensions.Any(E => Header.EndsWith(E)))
                         {
-                            Writer.WriteStartElement("ClInclude");
-                            WriteAttribute("Include", Path.GetFullPath(Header));
-                            Writer.WriteEndElement();
+                            WriteElement("ClInclude", delegate
+                            {
+                                WriteAttribute("Include", Project.TargetDirectory.GetRelativePath(Path.Combine(Project.Location, Header)));
+                            });
                         }
                     }
                 });
@@ -365,14 +371,40 @@ public class VcxprojWriter : IDisposable
                 {
                     foreach (string AddFile in AdditionalFiles)
                     {
-                        Writer.WriteStartElement("AdditionalFiles");
-                        WriteAttribute("Include", Path.GetFullPath(AddFile));
-                        Writer.WriteEndElement();
+                        WriteElement("AdditionalFiles", delegate
+                        {
+                            WriteAttribute("Include", Path.GetFullPath(AddFile));
+                        });
                     }
                 });
             }
             
-            Writer.WriteEndElement();
+            Project.Solution.Configurations.ForEach(Configuration =>
+            {
+                Project.Configure(Configuration);
+                string Condition = $"'$(Configuration)|$(Platform)' == '{Configuration.Name}|{Project.Solution.Architecture}'";
+                (string, string) ConditionAttribute = ("Condition", Condition);
+                
+                WriteElement("PropertyGroup", ConditionAttribute, delegate
+                {
+                    WriteProperty("OutDir", Project.BinariesDirectory.EndsWith(@"\") ? Project.BinariesDirectory : $@"{Project.BinariesDirectory}\");
+                    WriteProperty("IntDir", Project.IntermediateDirectory.EndsWith(@"\") ? Project.IntermediateDirectory : $@"{Project.IntermediateDirectory}\");
+                });
+                
+                WriteElement("ItemDefinitionGroup", ConditionAttribute, delegate
+                {
+                    if (!Project.Defines.IsEmpty())
+                    {
+                        WriteElement("ClCompile", delegate
+                        {
+                            WriteProperty("PreprocessorDefinitions", Project.Defines);
+                        });
+                    }
+                });
+            });
+            
+            WriteElement("Import", ("Project", @"$(VCTargetsPath)\Microsoft.Cpp.targets"));
+            });
         }
         catch (Exception Exception)
         {

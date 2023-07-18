@@ -10,5 +10,5 @@ public enum ProjectFlags
     ModuleSupport = 1 << 1,
     Optimize = 1 << 2,
     DebugSymbols = 1 << 3,
-    BuiltInWideCharType = 1 << 4
+    DisableBuiltInWideChar = 1 << 4
 }

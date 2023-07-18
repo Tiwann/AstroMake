@@ -48,7 +48,6 @@ public abstract class Project
     public List<string> Defines { get; protected set; }
     public List<string> Links { get; protected set; }
     public Guid Guid { get; }
-
     
     public Guid ProjectTypeGuid
     {
@@ -78,5 +77,10 @@ public abstract class Project
         Flags = ProjectFlags.None;
         this.Solution = Solution;
         Guid = Guid.NewGuid();
+    }
+    
+    public virtual void Configure(Configuration Configuration)
+    {
+        
     }
 }
