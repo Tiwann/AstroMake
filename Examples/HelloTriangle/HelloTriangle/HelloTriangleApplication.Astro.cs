@@ -13,7 +13,8 @@ public class HelloTriangleApp : ConsoleApplication
         Location = Path.Combine(Solution.Location, Name);
         TargetDirectory = Location;
         TargetName = Name;
-        Files.Add(@"Source\HelloTriangle.cpp");
+        Files.Add(@"Source\**.h");
+        Files.Add(@"Source\**.cpp");
         IncludeDirectories.AddRange(new[]
         {
             Path.Combine(Solution.Location, "Vendor", "glad", "include"),

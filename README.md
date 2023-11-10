@@ -14,7 +14,6 @@ When running Astro Make program, it recursively look for `.Astro.cs` files that 
 into an assembly in runtime.
 The compiler gives error messages so the users know if their code have mistakes.
 
-## How to uses
-
+## How to use
 
 

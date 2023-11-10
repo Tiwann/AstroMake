@@ -1,8 +1,6 @@
 #include <iostream>
 
 
-
-
 int main()
 {
 #if defined(HELLOWORLD_DEBUG)
