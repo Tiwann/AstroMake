@@ -6,6 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CSharp;
 
 namespace AstroMake;
@@ -22,7 +25,8 @@ public class BuildTask
     private readonly BuildTaskType BuildType;
     public List<string> BuildScripts { get; } = new();
     public string RootDirectory { get; set; } = Directory.GetCurrentDirectory();
-    private CompilerResults CompilerResults;
+    private EmitResult CompilerResults;
+    private Assembly CompiledAssembly;
 
     public BuildTask(string BuildType, IEnumerable<string> PredefinedSource = null)
     {
@@ -89,41 +93,75 @@ public class BuildTask
         Log.Trace("> Compiling scripts...");
         Stopwatch Stopwatch = new();
         Stopwatch.Start();
-        using CSharpCodeProvider CodeProvider = new();
-        CompilerParameters Parameters = new()
+
+        string[] ReferenceList =
         {
-            GenerateInMemory = true,
-            GenerateExecutable = false,
-            IncludeDebugInformation = true,
-            ReferencedAssemblies = { Assembly.GetExecutingAssembly().Location },
+            "System.dll",
+            "System.Private.CoreLib.dll",
+            "System.Runtime.dll",
+            "System.Console.dll",
+            "netstandard.dll",
+            "System.Text.RegularExpressions.dll",
+            "System.Linq.dll",
+            "System.Linq.Expressions.dll",
+            "System.IO.dll",
+            "System.Reflection.dll",
+            "System.Collections.dll",
+            "System.Collections.Concurrent.dll",
+            "System.Collections.NonGeneric.dll",
+            "System.Collections.Specialized.dll",
+            "Microsoft.CSharp.dll"
         };
+
+        List<MetadataReference> GetReferences(IEnumerable<string> Dlls)
+        {
+            List<MetadataReference> Out = new List<MetadataReference>();
+            string ReferencesPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
+            foreach (string Dll in Dlls)
+            {
+                if (ReferencesPath != null)
+                    Out.Add(MetadataReference.CreateFromFile(Path.Combine(ReferencesPath, Dll)));
+            }
+            return Out;
+        }
         
-        CompilerResults = CodeProvider.CompileAssemblyFromFile(Parameters, BuildScripts.ToArray());
-        
-        if (CompilerResults.Errors.HasErrors)
+        List<string> Sources = BuildScripts.Select(File.ReadAllText).ToList();
+        List<MetadataReference> References = GetReferences(ReferenceList);
+        References.Add(MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location));
+        List<SyntaxTree> SyntaxTrees = new List<SyntaxTree>();
+        Sources.ForEach(Source => SyntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(Source)));
+        CSharpCompilation Compiler = CSharpCompilation.Create("AstroMakeRuntimeCompiler")
+            .AddSyntaxTrees(SyntaxTrees)
+            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                .WithOptimizationLevel(OptimizationLevel.Release))
+            .AddReferences(References);
+
+        using Stream Output = new MemoryStream();
+        CompilerResults = Compiler.Emit(Output);
+
+        if (!CompilerResults.Success)
         {
             StringBuilder Builder = new();
-            foreach (CompilerError CompileError in CompilerResults.Errors)
+            foreach (Diagnostic CompileError in CompilerResults.Diagnostics)
             {
-                Builder.AppendLine($"{CompileError.ErrorText}.");
-                Builder.AppendLine($"File: {CompileError.FileName}. Line: {CompileError.Line} Col: {CompileError.Column}.");
+                Builder.AppendLine($"{CompileError}.");
             }
             throw new ScriptCompilationFailedException(Builder.ToString());
         }
-        
-        
+
+        CompiledAssembly = Assembly.Load(((MemoryStream)Output).ToArray());
         Stopwatch.Stop();
         Log.Success($"> Compilation successful! Took {Stopwatch.ElapsedMilliseconds / 1000.0f}s.");
     }
 
     public void Build()
     {
-        Assembly CompiledAssembly = CompilerResults.CompiledAssembly;
+        if (CompiledAssembly is null) throw new BuildFailedException("Compiled Assembly is null!");
         Type SolutionType = CompiledAssembly.GetTypes().Single(Type =>
             Type.IsSubclassOf<Solution>() &&
             Type.GetCustomAttribute<BuildAttribute>() is not null);
-
-        Solution Solution = SolutionType.CreateInstance<Solution>();
+        
+        Solution Solution = SolutionType.CreateInstance<Solution>()!;
         if (Solution is null)
         {
             throw new BuildFailedException("Failed to instantiate Solution!");
@@ -190,7 +228,7 @@ public class BuildTask
         
         foreach (Type Type in ProjectTypes)
         {
-            Project ProjectInstance = Type.CreateInstance<Project>(Solution);
+            Project ProjectInstance = Type.CreateInstance<Project>(Solution)!;
             if (Solution.ProjectNames.Contains(ProjectInstance.Name))
             {
                 Solution.Projects.Add(ProjectInstance);
