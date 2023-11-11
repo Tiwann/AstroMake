@@ -3,7 +3,7 @@
 namespace AstroMake;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-public class BuildAttribute : Attribute
+public abstract class BuildAttribute : Attribute
 {
     
 }

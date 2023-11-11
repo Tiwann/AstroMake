@@ -9,7 +9,7 @@ namespace AstroMake;
 /// </summary>
 public abstract class Solution
 {
-    public string Name { get; set; }
+    public required string Name { get; set; }
     public string TargetDirectory { get; protected set; }
     public string Location { get; protected set; } = Directory.GetCurrentDirectory();
     public List<Configuration> Configurations { get; protected set; }

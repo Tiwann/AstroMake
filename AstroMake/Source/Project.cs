@@ -10,12 +10,12 @@ namespace AstroMake;
 public abstract class Project
 {
     public Solution Solution { get; set; }
-    public string Name { get; set; }
-    public string TargetDirectory { get; protected set; }
-    public string TargetName { get; protected set; } 
-    public string Location { get; protected set; }
-    public string BinariesDirectory { get; set; }
-    public string IntermediateDirectory { get; set; }
+    public required string Name { get; set; }
+    public string TargetDirectory { get; protected set; } = null!;
+    public string TargetName { get; protected set; } = null!;
+    public string Location { get; protected set; } = null!;
+    public required string BinariesDirectory { get; set; }
+    public required string IntermediateDirectory { get; set; }
 
     private string Extension
     {

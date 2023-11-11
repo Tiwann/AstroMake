@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CSharp.RuntimeBinder;
@@ -224,9 +221,9 @@ public class ArgumentParser
     public IEnumerable<string> GetValues(CommandLineOption Option)
     {
         List<string> Result = new List<string>();
-        if (ParsedArguments.ContainsKey(Option))
+        if (ParsedArguments.TryGetValue(Option, out var Argument))
         {
-            ParsedArguments[Option].ForEach(S => Result.Add(S));
+            Argument.ForEach(S => Result.Add(S));
             return Result;
         }
         return null;

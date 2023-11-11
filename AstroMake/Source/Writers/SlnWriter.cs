@@ -108,7 +108,6 @@ public class SlnWriter : IDisposable
                 Indentation.Append(Settings.IndentationCharacter.ToString());
             }
         }
-
         return Indentation.ToString();
     }
 
@@ -123,7 +122,7 @@ public class SlnWriter : IDisposable
         WriteLine("# https://github.com/AstroMake\n");
         
         
-        WriteProject("Astro Scripts", string.Empty, new Guid("2150E333-8FDC-42A3-9474-1A3956D46DE8"), Guid.NewGuid(), delegate
+        WriteProject("AstroMake", string.Empty, new Guid("2150E333-8FDC-42A3-9474-1A3956D46DE8"), Guid.NewGuid(), delegate
         {
             BeginSection("ProjectSection", "SolutionItems", "preProject");
             Task.BuildScripts.ForEach(B =>

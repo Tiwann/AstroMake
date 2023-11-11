@@ -87,7 +87,7 @@ internal static class Program
             try
             {
                 // Create build task
-                IEnumerable<string> PredefinedSources = Parser.GetValues(Options.Source);
+                IEnumerable<string> PredefinedSources = Parser.GetValues(Options.Source)!;
                 BuildTask Task = new BuildTask(Parser.GetValue<string>(Options.Build), PredefinedSources);
                 if (Parser.GetValue<bool>(Options.RootDir))
                 {

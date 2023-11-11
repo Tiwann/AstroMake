@@ -20,7 +20,7 @@ public static class Extenders
     public static T Last<T>(this IEnumerable<T> List) where T : class
     {
         var Temp = List.ToList();
-        return Temp.Count != 0 ? Temp[Temp.Count - 1] : null;
+        return Temp.Count != 0 ? Temp[^1] : null;
     }
 
     public static bool IsEmpty<T>(this IEnumerable<T> List)

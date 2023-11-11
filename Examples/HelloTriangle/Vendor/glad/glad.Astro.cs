@@ -32,7 +32,6 @@ public class gladLib : StaticLibrary
         {
             BinariesDirectory = Path.Combine(Solution.Location, "Binaries", "Release", Name);
             IntermediateDirectory = Path.Combine(Solution.Location, "Intermediate", "Release", Name);
-            
             return;
         }
     }
