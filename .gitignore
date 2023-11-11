@@ -10,6 +10,8 @@ Binaries-Intermediate
 **.vcxproj.user
 **.dll
 **.pdb
+**.exe
+**AstroMake
 **.DotSettings.user
 
 **/bin
