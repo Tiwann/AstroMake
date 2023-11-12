@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstroMake", "AstroMake\AstroMake.csproj", "{9944AD07-8B22-4C56-938E-8C93FDEB4E92}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9944AD07-8B22-4C56-938E-8C93FDEB4E92}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9944AD07-8B22-4C56-938E-8C93FDEB4E92}.Debug|x64.Build.0 = Debug|Any CPU
+		{9944AD07-8B22-4C56-938E-8C93FDEB4E92}.Release|x64.ActiveCfg = Release|Any CPU
+		{9944AD07-8B22-4C56-938E-8C93FDEB4E92}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

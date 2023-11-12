@@ -3,8 +3,6 @@
 **.vscode
 Binaries
 Binaries-Intermediate
-**.sln
-**.csproj
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
