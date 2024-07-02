@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
-using System.Net;
-using System.Text;
+
 
 namespace AstroMake;
 
@@ -54,14 +53,17 @@ internal static class Program
 
         if (Parser.GetValue<bool>(Options.Install))
         {
+            Log.Error("This feature is not implemented yet.");
+            Environment.Exit(0);
             Log.Trace("Are you sure you wanna install AstroMake into your system ?");
             Log.Trace("> Yes (y) | No (n)");
             ConsoleKey Key = ConsoleExtensions.WaitForKeys(ConsoleKey.Y, ConsoleKey.N);
             if (Key is ConsoleKey.Y)
             {
-                HttpClient Client = new HttpClient();
-                Uri AstroUrl = new Uri()
-                Client.BaseAddress
+                /*HttpClient Client = new HttpClient();
+                Uri AstroUrl = new Uri();
+                Client.BaseAddress*/
+                
             }
         }
         
