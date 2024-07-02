@@ -8,23 +8,39 @@
 public static class Options
 {
     public static readonly CommandLineOption Help;
+    public static readonly CommandLineOption Init;
     public static readonly CommandLineOption Build;
     public static readonly CommandLineOption RootDir;
     public static readonly CommandLineOption Source;
     public static readonly CommandLineOption Clean;
     public static readonly CommandLineOption Verbose;
+    public static readonly CommandLineOption Install;
+
+    public static class Targets
+    {
+        public const string VisualStudio = "vs";
+        public const string Makefile = "makefile";
+        public const string XCode = "xcode";
+        public const string MinGW = "mingw";
+    }
 
     static Options()
     {
         Help = new CommandLineOption('h', "help", false, false, "Show help");
+        Init = new CommandLineOption('i', "init", false, false, "Initialize a workspace");
         Build = new CommandLineOption('b', "build", false, false, "Generate using Astro Make build scripts",
-            new("targets",
-            new("vstudio",  "Generate Visual Studio Solution (latest version)"),
-            new("makefile", "Generate Makefiles"),
-            new("xcode",    "Generate XCode Project")));
+            new CommandLineOptionPossibleValueList("targets",
+            new CommandLineOptionPossibleValue(Targets.VisualStudio,  "Generate Visual Studio Solution (latest version)"),
+            new CommandLineOptionPossibleValue(Targets.Makefile, "Generate Makefiles"),
+            new CommandLineOptionPossibleValue(Targets.XCode, "Generate XCode Project"),
+            new CommandLineOptionPossibleValue(Targets.MinGW, "Generate MinGW Makefiles")));
         RootDir = new CommandLineOption('d', "dir", false, false, "Specify a build script search root directory");
         Source = new CommandLineOption('s', "source", false, true, "Add specific build script to the build queue");
         Clean = new CommandLineOption('c', "clean", false, false, "Clean all generated files");
-        Verbose = new CommandLineOption('v', "verbose", false, false, "Log all warnings and informations");
+        Verbose = new CommandLineOption('v', "verbose", false, false, "Log all warnings and information");
+        Install = new CommandLineOption('I', "install", false, false, "Install AstroMake");
     }
+
+
+    
 }

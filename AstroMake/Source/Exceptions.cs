@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 public class InvalidCommandLineArgumentException : Exception
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 /// <summary>
 /// Describes an Application/Project
@@ -11,9 +7,9 @@ public abstract class Project
 {
     public Solution Solution { get; set; }
     public required string Name { get; set; }
-    public string TargetDirectory { get; protected set; } = null!;
-    public string TargetName { get; protected set; } = null!;
-    public string Location { get; protected set; } = null!;
+    public string TargetDirectory { get; set; }
+    public string TargetName { get; set; }
+    public required string Location { get;  set; }
     public required string BinariesDirectory { get; set; }
     public required string IntermediateDirectory { get; set; }
 
@@ -21,26 +17,23 @@ public abstract class Project
     {
         get
         {
-            switch (Language)
+            return Language switch
             {
-                case Language.C:
-                case Language.CPlusPlus:
-                    return Extensions.VisualCXXProject;
-                case Language.CSharp:
-                    return Extensions.VisualCSharpProject;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                Language.C or Language.CPlusPlus => Extensions.VisualStudio.CXXProject,
+                Language.CSharp => Extensions.VisualStudio.CSharpProject,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
     }
     
     public string TargetPath => Path.ChangeExtension(Path.Combine(TargetDirectory, TargetName), Extension);
-    public OutputType Type { get; protected set; }
-    public Language Language { get; protected set; }
+    public OutputType Type { get; protected init; }
+    public Language Language { get; set; }
     public ProjectFlags Flags { get; protected set; }
     public CPPStandard CppStandard { get; set; } = CPPStandard.CPP20;
     public CStandard CStandard { get; set; } = CStandard.C17;
     public CSharpVersion CSharpVersion { get; set; } = CSharpVersion.CSharp11;
+    public DotNetSDK DotNetSdk { get; set; } = DotNetSDK.DotNet8;
     public List<string> Files { get; protected set; }
     public List<string> AdditionalFiles { get; protected set; }
     public List<string> IncludeDirectories { get; protected set; }
@@ -48,21 +41,17 @@ public abstract class Project
     public List<string> Defines { get; protected set; }
     public List<string> Links { get; protected set; }
     public Guid Guid { get; }
-    
+
     public Guid ProjectTypeGuid
     {
         get
         {
-            switch (Language)
+            return Language switch
             {
-                case Language.C:
-                case Language.CPlusPlus:
-                    return new Guid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942");
-                case Language.CSharp:
-                    return new Guid("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC");
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                Language.C or Language.CPlusPlus => new Guid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"),
+                Language.CSharp => new Guid("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC"),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
     }
 
@@ -83,4 +72,5 @@ public abstract class Project
     {
         
     }
+    
 }

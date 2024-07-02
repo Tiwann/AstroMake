@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 public static class DictionaryHelpers
 {

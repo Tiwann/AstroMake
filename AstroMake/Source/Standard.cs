@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AstroMake;
+﻿namespace AstroMake;
 
 public enum CStandard
 {
@@ -13,6 +11,7 @@ public enum CStandard
 public enum CPPStandard
 {
     None,
+    CPP23,
     CPP20,
     CPP17,
     CPP14,
@@ -27,6 +26,7 @@ public enum CSharpVersion
     CSharp9,
     CSharp10,
     CSharp11,
+    CSharp12,
     CSharpLatest
 }
 
