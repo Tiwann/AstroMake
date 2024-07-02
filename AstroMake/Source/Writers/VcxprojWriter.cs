@@ -1,94 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Xml;
+﻿using System.Xml;
 
 namespace AstroMake;
 
-public class VcxprojWriter : IDisposable
+public class VcxprojWriter(Stream Output, Project Project) : XmlCustomWriter(Output)
 {
-    private readonly XmlTextWriter Writer;
-    private Project Project;
-
-    public VcxprojWriter(Stream Output, Project Project)
-    {
-        Writer = XmlStatics.CreateWriter(Output);
-        this.Project = Project;
-    }
-
-    private void WriteStartElement(string Name, params (string, string)[] Attributes)
-    {
-        Writer.WriteStartElement(Name);
-        foreach ((string, string) Attribute in Attributes)
-        {
-            WriteAttribute(Attribute.Item1, Attribute.Item2);
-        }
-    }
-    
-    private void WriteElement(string Name, (string, string) Attribute, params Action[] Content)
-    {
-        Writer.WriteStartElement(Name);
-        WriteAttribute(Attribute.Item1, Attribute.Item2);
-        foreach (Action Action in Content)
-        {
-            Action.Invoke();
-        }
-        Writer.WriteEndElement();
-    }
-
-    private void WriteElement(string Name, (string, string)[] Attributes, params Action[] Content)
-    {
-        Writer.WriteStartElement(Name);
-        foreach ((string, string) Attribute in Attributes)
-        {
-            WriteAttribute(Attribute.Item1, Attribute.Item2);
-        }
-        foreach (Action Action in Content)
-        {
-            Action.Invoke();
-        }
-        Writer.WriteEndElement();
-    }
-    
-    private void WriteElement(string Name, params Action[] Content)
-    {
-        Writer.WriteStartElement(Name);
-        foreach (Action Action in Content)
-        {
-            Action.Invoke();
-        }
-        Writer.WriteEndElement();
-    }
-
-    private void WriteAttribute(string Name, string Value)
-    {
-        Writer.WriteStartAttribute(Name);
-        Writer.WriteValue(Value);
-        Writer.WriteEndAttribute();
-    }
-
-    private void WriteProperty(string Name, string Value)
-    {
-        Writer.WriteStartElement(Name);
-        Writer.WriteString(Value);
-        Writer.WriteEndElement();
-    }
-    
-    private void WriteProperty(string Name, bool Value)
-    {
-        Writer.WriteStartElement(Name);
-        Writer.WriteString(Value.ToString());
-        Writer.WriteEndElement();
-    }
-    
-    private void WriteProperty(string Name, Guid Value)
-    {
-        Writer.WriteStartElement(Name);
-        Writer.WriteString($"{{{Value}}}".ToUpper());
-        Writer.WriteEndElement();
-        
-    }
     
     private void WriteProperty(string Name, CPPStandard Standard)
     {
@@ -110,37 +25,32 @@ public class VcxprojWriter : IDisposable
         Writer.WriteString(GetConfigType(Type));
         Writer.WriteEndElement();
     }
-
-    private void WriteProperty(string Name, IEnumerable<string> List)
-    {
-        WriteProperty(Name, List.GetList(';'));
-    }
-
-    private void WriteConfigurations(Solution Solutiuon)
+    
+    private void WriteConfigurations(Solution Solution)
     {
         WriteElement("ItemGroup", ("Label", "ProjectConfigurations"), delegate
         {
-            foreach (Configuration Configuration in Solutiuon.Configurations)
+            foreach (Configuration Configuration in Solution.Configurations)
             {
-                if (Solutiuon.Platforms.Count > 0)
+                if (Solution.Platforms.Count > 0)
                 {
-                    foreach (string Platform in Solutiuon.Platforms)
+                    foreach (string Platform in Solution.Platforms)
                     {
                         string ConfigName = $"{Configuration.Name} {Platform}";
-                        WriteElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solutiuon.Architecture}"), delegate
+                        WriteElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solution.Architecture}"), delegate
                         {
                             WriteProperty("Configuration", ConfigName);
-                            WriteProperty("Platform", $"{Solutiuon.Architecture}");    
+                            WriteProperty("Platform", $"{Solution.Architecture}");    
                         });
                     }
                 }
                 else
                 {
                     string ConfigName = $"{Configuration.Name}";
-                    WriteElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solutiuon.Architecture}"), delegate
+                    WriteElement("ProjectConfiguration", ("Include", $"{ConfigName}|{Solution.Architecture}"), delegate
                     {
                         WriteProperty("Configuration", ConfigName);
-                        WriteProperty("Platform", $"{Solutiuon.Architecture}");
+                        WriteProperty("Platform", $"{Solution.Architecture}");
                     });
                 }
             }
@@ -150,56 +60,40 @@ public class VcxprojWriter : IDisposable
 
     private string GetConfigType(OutputType Type)
     {
-        switch (Type)
+        return Type switch
         {
-            case OutputType.Console:
-            case OutputType.Windowed:
-                return "Application";
-            case OutputType.SharedLibrary:
-                return "SharedLibrary";
-            case OutputType.StaticLibrary:
-                return"StaticLibrary";
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            OutputType.Console or OutputType.Windowed => "Application",
+            OutputType.SharedLibrary => "SharedLibrary",
+            OutputType.StaticLibrary => "StaticLibrary",
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     private string GetStandard(CPPStandard Standard)
     {
-        switch (Standard)
+        return Standard switch
         {
-            case CPPStandard.CPP20:
-                return "stdcpp20";
-            case CPPStandard.CPP17:
-                return "stdcpp17";
-            case CPPStandard.CPP14:
-                return "stdcpp14";
-            case CPPStandard.CPP11:
-                return "stdcpp11";
-            case CPPStandard.CPPLatest:
-                return "stdcpplatest";
-            case CPPStandard.None:
-                return "Default";
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            CPPStandard.CPP20 => "stdcpp20",
+            CPPStandard.CPP17 => "stdcpp17",
+            CPPStandard.CPP14 => "stdcpp14",
+            CPPStandard.CPP11 => "stdcpp11",
+            CPPStandard.CPPLatest => "stdcpplatest",
+            CPPStandard.None => "Default",
+            CPPStandard.CPP23 => "stdcpp23",
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
     
     private string GetStandard(CStandard Standard)
     {
-        switch (Standard)
+        return Standard switch
         {
-            case CStandard.C11:
-                return "stdc11";
-            case CStandard.C17:
-                return "stdc17";
-            case CStandard.CLatest:
-                return "stdclatest";
-            case CStandard.None:
-                return "Default";
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            CStandard.C11 => "stdc11",
+            CStandard.C17 => "stdc17",
+            CStandard.CLatest => "stdclatest",
+            CStandard.None => "Default",
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     // TODO: Rewrite this
@@ -226,7 +120,7 @@ public class VcxprojWriter : IDisposable
         return null;
     }
 
-    public void Write()
+    public override void Write()
     {
         try
         {
@@ -315,6 +209,7 @@ public class VcxprojWriter : IDisposable
                 var Found = GetFilesFromWildcard(S);
                 if (Found != null) Files.AddRange(Found);
             });
+            
 
             List<string> AdditionalFiles = new List<string>();
             Files.AddRange(Project.AdditionalFiles.Where(F => File.Exists(@$"{Project.Location}\{F}")));
@@ -334,7 +229,7 @@ public class VcxprojWriter : IDisposable
                 Writer.WriteComment("Including source files");
                 WriteElement("ItemGroup", ("Label", "Sources"), delegate
                 {
-                    foreach (string Source in Files)
+                    foreach (string Source in Files.Distinct())
                     {
                         if (AvailableSourceExtensions.Any(E => Source.EndsWith(E)))
                         {
@@ -350,7 +245,7 @@ public class VcxprojWriter : IDisposable
                 Writer.WriteComment("Including header files");
                 WriteElement("ItemGroup", ("Label", "Headers"), delegate
                 {
-                    foreach (string Header in Files)
+                    foreach (string Header in Files.Distinct())
                     {
                         if (AvailableHeaderExtensions.Any(E => Header.EndsWith(E)))
                         {
@@ -369,7 +264,7 @@ public class VcxprojWriter : IDisposable
                 Writer.WriteComment("Including additional files");
                 WriteElement("ItemGroup", ("Label", "AdditionalFiles"), delegate
                 {
-                    foreach (string AddFile in AdditionalFiles)
+                    foreach (string AddFile in AdditionalFiles.Distinct())
                     {
                         WriteElement("AdditionalFiles", delegate
                         {
@@ -410,10 +305,5 @@ public class VcxprojWriter : IDisposable
         {
             Log.Error($"Error while writing Vcxproj: {Exception.Message}");
         }
-    }
-
-    public void Dispose()
-    {
-        Writer?.Dispose();
     }
 }

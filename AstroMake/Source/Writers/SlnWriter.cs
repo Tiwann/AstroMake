@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 
 namespace AstroMake;
 
@@ -27,7 +24,7 @@ public class SlnWriter : IDisposable
     private readonly SlnWriterSettings Settings;
 
     private List<string> SectionNames = new List<string>();
-    private int NumIndentation = 0;
+    private int NumIndentation;
     private Solution Solution;
 
 
@@ -91,6 +88,7 @@ public class SlnWriter : IDisposable
         WriteProject(Proj.Name, Proj.TargetPath, Proj.ProjectTypeGuid, Proj.Guid);
     }
     
+    
     private void WriteProject(string Name, string Path, Guid ProjectType, Guid ProjectGuid, Action Content)
     {
         BeginSection("Project", $"\"{{{ProjectType}}}\"", $"\"{Name}\", \"{Path}\", \"{{{ProjectGuid.ToString().ToUpper()}}}\"");
@@ -119,8 +117,7 @@ public class SlnWriter : IDisposable
         WriteLine("# Visual Studio 17");
         WriteLine($"# Astro Make {Version.AstroVersion} Generated Solution File");
         WriteLine("# (C) Erwann Messoah 2023");
-        WriteLine("# https://github.com/AstroMake\n");
-        
+        WriteLine("# https://github.com/Tiwann/AstroMake\n");
         
         WriteProject("AstroMake", string.Empty, new Guid("2150E333-8FDC-42A3-9474-1A3956D46DE8"), Guid.NewGuid(), delegate
         {
