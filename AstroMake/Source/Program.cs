@@ -49,6 +49,7 @@ internal static class Program
         if (Parser.GetValue<bool>(Options.Help))
         {
             Log.Trace(Parser.GetHelpText());
+            Environment.Exit(0);
         }
 
         if (Parser.GetValue<bool>(Options.Install))
@@ -68,7 +69,7 @@ internal static class Program
         }
         
         // handle init
-        if (Parser.GetValue<string>(Options.Init) is not null)
+        if (Parser.GetBool(Options.Init))
         {
             Log.Trace("> Initializing a workspace...");
             Stopwatch Stopwatch = Stopwatch.StartNew();
@@ -169,7 +170,6 @@ internal static class Program
         // Handle Verbosity
         Log.Verbose = Parser.GetValue<bool>(Options.Verbose);
         
-
         // Handle clean
         if (Parser.GetValue<bool>(Options.Clean))
         {
