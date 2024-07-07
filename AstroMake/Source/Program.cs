@@ -1,48 +1,131 @@
 ﻿using System.Diagnostics;
-
+using System.Runtime.InteropServices;
 
 namespace AstroMake;
 
+public static class Links
+{
+    private static readonly Uri Windows = new("https://github.com/Tiwann/AstroMake/releases/download/1.2/AstroMake-Windows-x64.exe");
+    private static readonly Uri Linux = new("https://github.com/Tiwann/AstroMake/releases/download/1.2/AstroMake-Linux-x64");
+    private static readonly Uri MacOS = new("https://github.com/Tiwann/AstroMake/releases/download/1.2/AstroMake-MacOS-x64");
+
+    public static Uri GetLink(System Sys)
+    {
+        return Sys switch
+        {
+            System.Windows => Windows,
+            System.Linux => Linux,
+            System.MacOS => MacOS,
+            _ => throw new Exception("This Operating System is not supported. Please compile for your system.")
+        };
+    }
+}
+
 internal static class Program
 {
-    private static void Main(string[] Arguments)
+    private static System GetCurrentSystem()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return System.Windows;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) return System.Linux;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return System.MacOS;
+        throw new Exception("This operating system is not supported yet.");
+    }
+
+    private static Architecture GetCurrentArchitecture()
+    {
+        return RuntimeInformation.OSArchitecture switch
+        {
+            global::System.Runtime.InteropServices.Architecture.X64 => Architecture.x64,
+            global::System.Runtime.InteropServices.Architecture.Arm64 => Architecture.ARM64,
+            global::System.Runtime.InteropServices.Architecture.X86 => Architecture.x86,
+            _ => throw new Exception("This architecture is not yet supported.")
+        };
+    }
+
+    private static void Clean()
+    {
+        Log.Trace("> Cleaning all generated files...");
+        if (!File.Exists(Extensions.AstroFile))
+        {
+            Log.Error($"{Extensions.AstroFile} file not found!");
+            Environment.Exit(-1);
+        }
+
+        List<string> FileContent = File.ReadLines(Extensions.AstroFile).ToList();
+        IEnumerable<string> Files = FileContent.Where(S => !S.StartsWith("#") && File.Exists(S));
+        IEnumerable<string> Directories = FileContent.Where(S => !S.StartsWith("#") && Directory.Exists(S));
+        foreach (string F in Files)
+        {
+            Log.Trace($"> Deleting {F}");
+            File.Delete(F);
+        }
+        
+        foreach (string D in Directories)
+        {
+            Log.Trace($"> Deleting {D}");
+            Directory.Delete(D);
+        }
+        
+        File.Delete(Extensions.AstroFile);
+        Log.Success("> Done!");
+        Environment.Exit(0);
+    }
+    
+    private static async Task Main(string[] Arguments)
     {
         // Hello Astro Make
         Log.Trace($"Astro Make {Version.AstroVersion}");
         Log.Trace("Copyright (C) 2023 Erwann Messoah");
+
+        System CurrentSystem = System.None;
+        Architecture CurrentArchitecture = Architecture.None;
+        try
+        {
+            CurrentSystem = GetCurrentSystem();
+            CurrentArchitecture = GetCurrentArchitecture();
+        }
+        catch (Exception Exception)
+        {
+            Log.Error(Exception.Message);
+            Environment.Exit(-1);
+        }
+        
         
         // Setting up the parser
-        ArgumentParser Parser = new(Arguments, ArgumentParserSettings.WindowsStyle);
-        Parser.AddOptions(
-            Options.Help,
-            Options.Init,
-            Options.Source, 
-            Options.Build, 
-            Options.RootDir, 
-            Options.Clean, 
-            Options.Verbose,
-            Options.Install);
+        ArgumentParserSettings Settings = CurrentSystem switch
+        {
+            System.Windows => ArgumentParserSettings.WindowsStyle,
+            System.Linux => ArgumentParserSettings.LinuxStyle,
+            System.MacOS => ArgumentParserSettings.LinuxStyle,
+        };
+        ArgumentParser Parser = new(Arguments, Settings);
         
         // Parse the arguments
         try
         {
+            Parser.AddOptions<Options>();
             Parser.Parse();
+        }
+        catch (NullReferenceException Exception)
+        {
+            Log.Error(Exception.Message);
+            Environment.Exit(-1);
         }
         catch (InvalidCommandLineArgumentException Exception)
         {
             Log.Error(Exception.Message);
             Log.Trace(Parser.GetHelpText());
-            Environment.Exit(0);
+            Environment.Exit(-1);
         }
         catch (ArgumentException Exception)
         {
             Log.Error(Exception.Message);
-            Environment.Exit(0);
+            Environment.Exit(-1);
         }
         catch (NoArgumentProvidedException Exception)
         {
             Log.Error(Exception.Message);
-            Environment.Exit(0);
+            Environment.Exit(-1);
         }
         
         // Handle help
@@ -51,20 +134,45 @@ internal static class Program
             Log.Trace(Parser.GetHelpText());
             Environment.Exit(0);
         }
-
+        
         if (Parser.GetValue<bool>(Options.Install))
         {
-            Log.Error("This feature is not implemented yet.");
-            Environment.Exit(0);
-            Log.Trace("Are you sure you wanna install AstroMake into your system ?");
+            Log.Trace("Are you sure you want to install AstroMake into your system ?");
             Log.Trace("> Yes (y) | No (n)");
             ConsoleKey Key = ConsoleExtensions.WaitForKeys(ConsoleKey.Y, ConsoleKey.N);
+
+            if (Key is ConsoleKey.N)
+            {
+                Log.Trace("> Installation has been aborted.");
+                Environment.Exit(0);
+            }
+            
             if (Key is ConsoleKey.Y)
             {
-                /*HttpClient Client = new HttpClient();
-                Uri AstroUrl = new Uri();
-                Client.BaseAddress*/
+                Uri Link = Links.GetLink(CurrentSystem);
+                var Dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "AstroMake");
+                Directory.CreateDirectory(Dir);
+                bool IsWindows = CurrentSystem is System.Windows;
+                var Output = Path.ChangeExtension(Path.Combine(Dir, "AstroMake"), IsWindows ? ".exe" : "");
+                FileDownloader Downloader = new FileDownloader(Link, Output);
+                ProgressBar Bar = new ProgressBar(20, 16.0);
                 
+                Log.Trace("> Downloading...");
+                Console.CursorVisible = false;
+                Downloader.OnProgress += Percent =>
+                {
+                    Bar.Report(Percent);
+                };
+
+                Task DownloadTask = Downloader.DownloadAsync();
+                await DownloadTask;
+                Console.CursorVisible = true;
+                if (DownloadTask.IsCompletedSuccessfully)
+                {
+                    Bar.Dispose();
+                    Log.Success("Successfully downloaded AstroMake latest version!");
+                    Environment.Exit(0);
+                }
             }
         }
         
@@ -171,34 +279,8 @@ internal static class Program
         Log.Verbose = Parser.GetValue<bool>(Options.Verbose);
         
         // Handle clean
-        if (Parser.GetValue<bool>(Options.Clean))
-        {
-            Log.Trace("> Cleaning all generated files...");
-            if (!File.Exists(Extensions.AstroFile))
-            {
-                Log.Error($"{Extensions.AstroFile} file not found!");
-                Environment.Exit(-1);
-            }
-
-            List<string> FileContent = File.ReadLines(Extensions.AstroFile).ToList();
-            IEnumerable<string> Files = FileContent.Where(S => !S.StartsWith("#") && File.Exists(S));
-            IEnumerable<string> Directories = FileContent.Where(S => !S.StartsWith("#") && Directory.Exists(S));
-            foreach (string F in Files)
-            {
-                Log.Trace($"> Deleting {F}");
-                File.Delete(F);
-            }
-        
-            foreach (string D in Directories)
-            {
-                Log.Trace($"> Deleting {D}");
-                Directory.Delete(D);
-            }
-        
-            File.Delete(Extensions.AstroFile);
-            Log.Success("> Done!");
-            Environment.Exit(0);
-        }
+        if (Parser.GetValue<bool>(Options.Clean)) 
+            Clean();
 
         // Handle build
         if (Parser.GetBool(Options.Build))
