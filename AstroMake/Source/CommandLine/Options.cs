@@ -1,11 +1,14 @@
 ﻿namespace AstroMake;
 
 
-/// <summary>
-/// Contains all the available <see cref="CommandLineOption"/> for the program
-/// All options are static so we can access it all through the program 
-/// </summary>
-public static class Options
+[AttributeUsage(AttributeTargets.Class)]
+public class ArgumentParserOptionsAttribute : Attribute
+{
+    
+}
+
+[ArgumentParserOptions]
+public class Options
 {
     public static readonly CommandLineOption Help;
     public static readonly CommandLineOption Init;
