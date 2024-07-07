@@ -20,5 +20,5 @@ public class ArgumentParserSettings
     }
     
     public static readonly ArgumentParserSettings WindowsStyle = new("/", "/", ':');
-    public static readonly ArgumentParserSettings UnixStyle = new("-", "--", '=');
+    public static readonly ArgumentParserSettings LinuxStyle = new("-", "--", '=');
 }
