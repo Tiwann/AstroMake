@@ -5,7 +5,7 @@ public enum System
 {
     None = 0,
     Windows,
-    Unix,
+    Linux,
     MacOS,
     Android,
     IOS,
