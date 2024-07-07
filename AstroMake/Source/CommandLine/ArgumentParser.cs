@@ -1,5 +1,4 @@
-﻿
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text;
 using Microsoft.CSharp.RuntimeBinder;
@@ -9,24 +8,14 @@ namespace AstroMake;
 /// <summary>
 /// Provides utilities to parse command line arguments
 /// </summary>
-public class ArgumentParser
+public class ArgumentParser(IEnumerable<string> Arguments, ArgumentParserSettings Settings)
 {
+    public ArgumentParserSettings Settings { get; } = Settings;
 
-    private readonly IEnumerable<string> Arguments;
-    public ArgumentParserSettings Settings { get; }
-    
-    private readonly Dictionary<CommandLineOption, List<dynamic>> ParsedArguments;
-    private Collection<CommandLineOption> Options = new();
-    private readonly IEnumerable<char> PrefixCharacters;
+    private readonly Dictionary<CommandLineOption, List<dynamic>> ParsedArguments = new();
+    private Collection<CommandLineOption> Options = [];
+    private readonly IEnumerable<char> PrefixCharacters = Settings.ShortFormatPrefix.ToCharArray().Union(Settings.LongFormatPrefix.ToCharArray());
 
-    public ArgumentParser(IEnumerable<string> Arguments, ArgumentParserSettings Settings)
-    {
-        this.Settings = Settings;
-        this.Arguments = Arguments;
-        ParsedArguments = new();
-        PrefixCharacters = Settings.ShortFormatPrefix.ToCharArray().Union(Settings.LongFormatPrefix.ToCharArray());
-    }
-    
     private bool IsArgumentValid(string Argument)
     {
         var ShortNames = Options.Select(O => O.ShortName);
@@ -38,8 +27,8 @@ public class ArgumentParser
     private string GetOptionNameFromArgument(string Argument)
     {
         int AssignmentPosition = Argument.IndexOf(Settings.AssigmentCharacter);
-        string TrimedArgument = Argument.TrimStart(PrefixCharacters.ToArray());
-        return AssignmentPosition == -1 ? TrimedArgument : TrimedArgument.Substring(0, AssignmentPosition - 1);
+        string TrimmedArgument = Argument.TrimStart(PrefixCharacters.ToArray());
+        return AssignmentPosition == -1 ? TrimmedArgument : TrimmedArgument.Substring(0, AssignmentPosition - 1);
     }
 
     private (string, dynamic) SplitArgument(string Argument)
@@ -54,22 +43,36 @@ public class ArgumentParser
         }
         else
         {
-            string TrimedKey = Argument.TrimStart(PrefixCharacters.ToArray());
-            Key = TrimedKey.Substring(0, AssignmentPosition - 1);
-            Value = Argument.Substring(AssignmentPosition + 1);
+            string TrimmedKey = Argument.TrimStart(PrefixCharacters.ToArray());
+            Key = TrimmedKey[..(AssignmentPosition - 1)];
+            Value = Argument[(AssignmentPosition + 1)..];
         }
 
         return (Key, Value);
     }
 
+    [Obsolete]
     public void AddOptions(params CommandLineOption[] InOptions)
     {
         Options = new Collection<CommandLineOption>(InOptions);
     }
 
+    public void AddOptions(Type ClassType)
+    {
+        var OptionsAttribute = ClassType.GetCustomAttribute<ArgumentParserOptionsAttribute>();
+        if (OptionsAttribute is null)
+            throw new NullReferenceException($"Class {ClassType.Name} should have a ArgumentParserOptionsAttribute.");
+
+        IEnumerable<CommandLineOption> CmdLineOptions = ClassType.GetFields()
+            .Where(Info => Info.IsPublic && Info.IsStatic).Select(Info => Info.GetValue(null) as CommandLineOption);
+        Options = [..CmdLineOptions];
+    }
+
+    public void AddOptions<T>() => AddOptions(typeof(T));
+    
     public void Parse()
     {
-        if (Arguments.Count() == 0)
+        if (!Arguments.Any())
             throw new NoArgumentProvidedException($"No arguments were provided. Try {Assembly.GetExecutingAssembly().GetName().Name} {Settings.LongFormatPrefix}help.");
         
         foreach (string Argument in Arguments)
@@ -88,7 +91,7 @@ public class ArgumentParser
                     throw new InvalidCommandLineArgumentException($"Cannot use argument \"{Argument}\" multiple times.");
 
                 if(!ParsedArguments.ContainsKey(Option))
-                    ParsedArguments[Option] = new List<dynamic>();
+                    ParsedArguments[Option] = [];
                 ParsedArguments[Option].Add(SplittedArgument.Item2);
                 
             }
@@ -179,9 +182,9 @@ public class ArgumentParser
     
     public bool GetBool(CommandLineOption Option)
     {
-        if (ParsedArguments.ContainsKey(Option))
+        if (ParsedArguments.TryGetValue(Option, out var Argument))
         {
-            var Value = ParsedArguments[Option][0];
+            var Value = Argument[0];
             if (Value is bool BVal) return BVal;
             if (Value is string SVal) return !string.IsNullOrEmpty(SVal);
         }
@@ -190,9 +193,9 @@ public class ArgumentParser
 
     public string GetString(CommandLineOption Option)
     {
-        if (ParsedArguments.ContainsKey(Option))
+        if (ParsedArguments.TryGetValue(Option, out var Argument))
         {
-            var Value = ParsedArguments[Option][0];
+            var Value = Argument[0];
             if (Value is bool BVal) return BVal.ToString();
             if (Value is string SVal) return SVal;
         }
@@ -203,9 +206,9 @@ public class ArgumentParser
     {
         try
         {
-            if (ParsedArguments.ContainsKey(Option))
+            if (ParsedArguments.TryGetValue(Option, out var Argument))
             {
-                T Value = ParsedArguments[Option][0];
+                T Value = Argument[0];
                 return Value;
             }
         }
