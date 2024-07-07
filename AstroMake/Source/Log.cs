@@ -31,7 +31,6 @@ public static class Log
         Console.WriteLine($"{Message}");
         Console.ResetColor();
     }
-
     
     public static void TraceVerbose(string Message)
     {
@@ -71,5 +70,13 @@ public static class Log
             Console.WriteLine($"{Message}");
             Console.ResetColor();
         }
+    }
+
+    public static void ClearLine()
+    {
+        int currentLineCursor = Console.CursorTop;
+        Console.SetCursorPosition(0, currentLineCursor);
+        Console.Write(new string(' ', Console.WindowWidth));
+        Console.SetCursorPosition(0, currentLineCursor);
     }
 }
