@@ -1,5 +1,11 @@
 ﻿namespace AstroMake;
 
+public struct Filter
+{
+    public (string, string) KeyValue;
+    public Action Action;
+}
+
 /// <summary>
 /// Describes an Application/Project
 /// </summary>
@@ -41,6 +47,7 @@ public abstract class Project
     public List<string> Defines { get; protected set; }
     public List<string> Links { get; protected set; }
     public Guid Guid { get; }
+    public List<Filter> Filters = new();
 
     public Guid ProjectTypeGuid
     {

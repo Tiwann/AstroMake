@@ -15,7 +15,7 @@ public enum BuildTaskType
 {
     VisualStudioSolution,
     Makefiles,
-    MinGW,
+    CMake,
     XCodeProject,
 }
 
@@ -35,7 +35,7 @@ public class BuildTask
             Options.Targets.VisualStudio => BuildTaskType.VisualStudioSolution,
             Options.Targets.Makefile => BuildTaskType.Makefiles,
             Options.Targets.XCode => BuildTaskType.XCodeProject,
-            Options.Targets.MinGW => BuildTaskType.MinGW,
+            Options.Targets.CMake => BuildTaskType.CMake,
             _ => throw new BuildFailedException($"Failed to build solution: No such a valid target ({BuildType}).")
         };
 
@@ -124,13 +124,12 @@ public class BuildTask
         List<SyntaxTree> SyntaxTrees = [];
         Sources.ForEach(Source => SyntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(Source)));
 
-        CSharpCompilationOptions CompilerOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-            .WithOptimizationLevel(OptimizationLevel.Release);
+        CSharpCompilationOptions CompilerOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+            optimizationLevel: OptimizationLevel.Release);
+
+        CSharpCompilation Compiler =
+            CSharpCompilation.Create("AstroMakeRuntimeCompiler", SyntaxTrees, GetReferences(), CompilerOptions);
         
-        CSharpCompilation Compiler = CSharpCompilation.Create("AstroMakeRuntimeCompiler")
-            .AddSyntaxTrees(SyntaxTrees)
-            .WithOptions(CompilerOptions)
-            .AddReferences(GetReferences());
 
         using Stream Output = new MemoryStream();
         CompilerResults = Compiler.Emit(Output);
@@ -261,21 +260,49 @@ public class BuildTask
             {
                 throw new BuildFailedException($"Please specify a location for project \"{Project.Name}\".");
             }
+            
+            foreach (var Filter in Project.Filters)
+            {
+                switch (Filter.KeyValue.Item1)
+                {
+                    case "Configuration":
+                        IEnumerable<string> Names = Solution.Configurations.Select(C => C.Name);
+                        if (Names.Contains(Filter.KeyValue.Item2))
+                            Filter.Action.Invoke();
+                        break;
+                    case "System":
+                        IEnumerable<string> Systems = Solution.Systems.Select(S => nameof(S));
+                        if(Systems.Contains(Filter.KeyValue.Item2))
+                            Filter.Action.Invoke();
+                        break;
+                    case "Architecture":
+                        if($"{Solution.Architecture}" == Filter.KeyValue.Item2)
+                            Filter.Action.Invoke();
+                        break;
+                }
+            }
         });
         
         foreach (var Command in Solution.PreBuildCommands)
         {
-            List<string> Split = [..Command.Split(' ')];
             ProcessStartInfo Info = new ProcessStartInfo();
-            Info.CreateNoWindow = true;
-            Info.UseShellExecute = true;
-            Info.FileName = Split[0];
-            Info.Arguments = Command.Remove(0, Info.FileName.Length + 1);
+            Info.CreateNoWindow = false;
+            Info.UseShellExecute = false;
+            Info.FileName = Command.Executable;
+
+            StringBuilder Builder = new StringBuilder();
+            foreach (var Arg in Command.Arguments)
+            {
+                Builder.Append($"{Arg} ");
+            }
+
+            Info.Arguments = Builder.ToString();
             Info.RedirectStandardOutput = true;
             Info.RedirectStandardError = true;
 
             Process Proc = new Process();
             Proc.StartInfo = Info;
+            Log.Trace($"> Executing command: {Command.Executable} {Builder}");
             if (!Proc.Start())
             {
                 Log.Error($"Failed to execute command: {Command}");
@@ -291,8 +318,8 @@ public class BuildTask
             case BuildTaskType.Makefiles:
                 BuildMakefiles(Solution);
                 break;
-            case BuildTaskType.MinGW:
-                BuildMinGW(Solution);
+            case BuildTaskType.CMake:
+                BuildCMake(Solution);
                 break;
             case BuildTaskType.XCodeProject:
                 BuildXCodeProject(Solution);
@@ -385,7 +412,7 @@ public class BuildTask
         Writer.Write();
     }
     
-    private void BuildMinGW(Solution Solution)
+    private void BuildCMake(Solution Solution)
     {
         throw new NotImplementedException();
     }

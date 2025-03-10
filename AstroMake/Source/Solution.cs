@@ -1,5 +1,10 @@
 ﻿namespace AstroMake;
 
+public struct CmdCommand
+{
+    public string Executable;
+    public IEnumerable<string> Arguments;
+}
 public abstract class Solution
 {
     public required string Name { get; set; }
@@ -13,7 +18,7 @@ public abstract class Solution
     public List<Project> Projects { get; set; } = [];
 
     public List<string> PostBuildCommands { get; set; } = [];
-    public List<string> PreBuildCommands { get; set; } = [];
+    public List<CmdCommand> PreBuildCommands { get; set; } = [];
     
     public string AstroMakeFilePath => Path.Combine(Location, Extensions.AstroFile);
 
